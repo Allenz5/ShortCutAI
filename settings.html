@@ -1,0 +1,256 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Settings</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        padding: 20px;
+        margin: 0;
+        background-color: #f5f5f5;
+      }
+      
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        max-width: 500px;
+        margin: 0 auto;
+      }
+      
+      h1 {
+        margin-top: 0;
+        color: #333;
+        font-size: 24px;
+        margin-bottom: 25px;
+      }
+      
+      .setting-item {
+        margin-bottom: 25px;
+      }
+      
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-weight: 500;
+        font-size: 14px;
+      }
+      
+      .toggle-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+      }
+      
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .3s;
+        border-radius: 24px;
+      }
+      
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+      }
+      
+      input:checked + .slider {
+        background-color: #4CAF50;
+      }
+      
+      input:checked + .slider:before {
+        transform: translateX(26px);
+      }
+      
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+        transition: border-color 0.3s;
+      }
+      
+      input[type="text"]:focus,
+      input[type="password"]:focus {
+        outline: none;
+        border-color: #4CAF50;
+      }
+      
+      .button-container {
+        display: flex;
+        gap: 10px;
+        margin-top: 30px;
+      }
+      
+      button {
+        flex: 1;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      
+      .save-btn {
+        background-color: #4CAF50;
+        color: white;
+      }
+      
+      .save-btn:hover {
+        background-color: #45a049;
+      }
+      
+      .cancel-btn {
+        background-color: #f1f1f1;
+        color: #333;
+      }
+      
+      .cancel-btn:hover {
+        background-color: #ddd;
+      }
+      
+      .message {
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        display: none;
+      }
+      
+      .message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      
+      .message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Settings</h1>
+      
+      <div id="message" class="message"></div>
+      
+      <div class="setting-item">
+        <label>Auto Open on Start</label>
+        <div class="toggle-container">
+          <label class="switch">
+            <input type="checkbox" id="autoStart">
+            <span class="slider"></span>
+          </label>
+          <span id="autoStartLabel">Disabled</span>
+        </div>
+      </div>
+      
+      <div class="setting-item">
+        <label for="apiKey">OpenAI API Key</label>
+        <input type="password" id="apiKey" placeholder="Enter your OpenAI API Key">
+      </div>
+      
+      <div class="button-container">
+        <button class="save-btn" id="saveBtn">Save</button>
+        <button class="cancel-btn" id="cancelBtn">Cancel</button>
+      </div>
+    </div>
+    
+    <script>
+      const autoStartCheckbox = document.getElementById('autoStart');
+      const autoStartLabel = document.getElementById('autoStartLabel');
+      const apiKeyInput = document.getElementById('apiKey');
+      const saveBtn = document.getElementById('saveBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+      const messageDiv = document.getElementById('message');
+      
+      // Load current settings
+      async function loadSettings() {
+        try {
+          const config = await window.api.getConfig();
+          autoStartCheckbox.checked = config.autoStart;
+          updateAutoStartLabel();
+          apiKeyInput.value = config.apiKey || '';
+        } catch (error) {
+          showMessage('Error loading settings', 'error');
+        }
+      }
+      
+      function updateAutoStartLabel() {
+        autoStartLabel.textContent = autoStartCheckbox.checked ? 'Enabled' : 'Disabled';
+      }
+      
+      function showMessage(text, type) {
+        messageDiv.textContent = text;
+        messageDiv.className = `message ${type}`;
+        messageDiv.style.display = 'block';
+        
+        setTimeout(() => {
+          messageDiv.style.display = 'none';
+        }, 3000);
+      }
+      
+      // Event listeners
+      autoStartCheckbox.addEventListener('change', updateAutoStartLabel);
+      
+      saveBtn.addEventListener('click', async () => {
+        try {
+          const config = {
+            autoStart: autoStartCheckbox.checked,
+            apiKey: apiKeyInput.value
+          };
+          
+          await window.api.saveConfig(config);
+          showMessage('Settings saved successfully!', 'success');
+          
+          setTimeout(() => {
+            window.close();
+          }, 1000);
+        } catch (error) {
+          showMessage('Error saving settings', 'error');
+        }
+      });
+      
+      cancelBtn.addEventListener('click', () => {
+        window.close();
+      });
+      
+      // Load settings on page load
+      loadSettings();
+    </script>
+  </body>
+</html>
+

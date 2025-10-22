@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Hello Electron</title>
+  </head>
+  <body>
+    <h1>Hello Electron 👋</h1>
+    <p id="msg"></p>
+    <script>
+      document.getElementById('msg').textContent = window.api.hello();
+    </script>
+  </body>
+</html>
