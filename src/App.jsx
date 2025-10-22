@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import InputField from './InputField';
 
 function App() {
-  const [currentView, setCurrentView] = useState('home');
+  const [currentView, setCurrentView] = useState('inputfield');
 
   useEffect(() => {
     // Listen for view changes from the menu
@@ -16,14 +17,7 @@ function App() {
   const renderContent = () => {
     switch (currentView) {
       case 'inputfield':
-        return (
-          <div className="view-content">
-            <h1>InputField View</h1>
-            <p className="view-description">
-              This is the InputField view. Here you can process text input.
-            </p>
-          </div>
-        );
+        return <InputField />;
       
       case 'selection':
         return (

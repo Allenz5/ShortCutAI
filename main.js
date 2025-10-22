@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 const configPath = path.join(app.getPath('userData'), 'config.json');
+const inputFieldConfigPath = path.join(app.getPath('userData'), 'inputfield-config.json');
 
 // Load or initialize config
 function loadConfig() {
@@ -22,6 +23,40 @@ function saveConfig(config) {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
   } catch (error) {
     console.error('Error saving config:', error);
+  }
+}
+
+// Load or initialize InputField config
+function loadInputFieldConfig() {
+  try {
+    if (fs.existsSync(inputFieldConfigPath)) {
+      return JSON.parse(fs.readFileSync(inputFieldConfigPath, 'utf8'));
+    }
+  } catch (error) {
+    console.error('Error loading InputField config:', error);
+  }
+  // Return default config with EditGrammar profile
+  const defaultConfig = {
+    profiles: [
+      {
+        id: 'default-editgrammar',
+        name: 'EditGrammar',
+        prompt: 'Please fix the grammar and spelling in the following text while keeping the original meaning:'
+      }
+    ],
+    general: { hotkey: '' }
+  };
+  // Save the default config so it persists
+  saveInputFieldConfig(defaultConfig);
+  return defaultConfig;
+}
+
+// Save InputField config
+function saveInputFieldConfig(config) {
+  try {
+    fs.writeFileSync(inputFieldConfigPath, JSON.stringify(config, null, 2));
+  } catch (error) {
+    console.error('Error saving InputField config:', error);
   }
 }
 
@@ -130,6 +165,15 @@ ipcMain.handle('save-config', (event, config) => {
     });
   }
   
+  return { success: true };
+});
+
+ipcMain.handle('get-inputfield-config', () => {
+  return loadInputFieldConfig();
+});
+
+ipcMain.handle('save-inputfield-config', (event, config) => {
+  saveInputFieldConfig(config);
   return { success: true };
 });
 
