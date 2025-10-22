@@ -66,6 +66,7 @@ let mainWindow;
 let settingsWindow;
 let selectorWindow;
 let currentHotkey;
+let isQuitting = false;
 
 function sendKeys(keys) {
   // Windows-only implementation via PowerShell SendKeys
@@ -290,6 +291,14 @@ function createWindow() {
     },
   });
 
+  // Minimize to taskbar instead of closing the app
+  mainWindow.on('close', (e) => {
+    if (!isQuitting) {
+      e.preventDefault();
+      mainWindow.minimize();
+    }
+  });
+
   // Load from Vite dev server in development, or from built files in production
   if (process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:3000');
@@ -401,6 +410,10 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+});
+
+app.on('before-quit', () => {
+  isQuitting = true;
 });
 
 app.on('will-quit', () => {
