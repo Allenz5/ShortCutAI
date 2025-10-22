@@ -33,6 +33,10 @@ function InputField() {
   };
 
   const handleAddProfile = () => {
+    if (profiles.length >= 9) {
+      alert('Maximum 9 profiles allowed (use number keys 1-9 to select).');
+      return;
+    }
     const newProfile = {
       id: Date.now().toString(),
       name: `Profile ${profiles.length + 1}`,
