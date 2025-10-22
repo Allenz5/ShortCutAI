@@ -4,12 +4,37 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "dev": "concurrently \"vite\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
+    "build": "vite build",
+    "start": "electron .",
+    "package": "npm run build && electron-builder"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^38.4.0"
+    "@vitejs/plugin-react": "^5.0.4",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^38.4.0",
+    "electron-builder": "^26.0.12",
+    "vite": "^7.1.11",
+    "wait-on": "^9.0.1"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "build": {
+    "appId": "com.shortcutai.app",
+    "files": [
+      "dist/**/*",
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    }
   }
 }

@@ -39,7 +39,13 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadFile('index.html');
+  // Load from Vite dev server in development, or from built files in production
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.loadURL('http://localhost:3000');
+    mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
+  }
   
   // Create custom menu
   const menuTemplate = [
@@ -73,7 +79,12 @@ function createSettingsWindow() {
     },
   });
 
-  settingsWindow.loadFile('settings.html');
+  // Load from Vite dev server in development, or from built files in production
+  if (process.env.NODE_ENV === 'development') {
+    settingsWindow.loadURL('http://localhost:3000/settings.html');
+  } else {
+    settingsWindow.loadFile(path.join(__dirname, 'dist/settings.html'));
+  }
   
   settingsWindow.on('closed', () => {
     settingsWindow = null;
