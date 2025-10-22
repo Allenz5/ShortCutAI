@@ -18,7 +18,24 @@ body {
   justify-content: center;
   min-height: 100vh;
   padding: 40px;
+}
+
+.view-content {
+  width: 100%;
+  max-width: 700px;
   text-align: center;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 h1 {
@@ -39,22 +56,53 @@ h1 {
   backdrop-filter: blur(10px);
 }
 
+.view-description {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.95);
+  padding: 20px 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  line-height: 1.6;
+}
+
 .info {
   background: white;
   padding: 30px 40px;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  max-width: 500px;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .info p {
   margin-bottom: 15px;
   line-height: 1.6;
   color: #555;
+  text-align: left;
 }
 
 .info p:last-child {
   margin-bottom: 0;
+}
+
+.info ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+  text-align: left;
+}
+
+.info ul li {
+  padding: 12px 0;
+  color: #666;
+  border-bottom: 1px solid #eee;
+  line-height: 1.6;
+}
+
+.info ul li:last-child {
+  border-bottom: none;
 }
 
 strong {

@@ -54,7 +54,26 @@ function createWindow() {
       click: () => {
         createSettingsWindow();
       }
+    },
+    {
+      label: 'InputField',
+      click: () => {
+        mainWindow.webContents.send('change-view', 'inputfield');
+      }
     }
+    // Selection and ScreenShot hidden for now
+    // {
+    //   label: 'Selection',
+    //   click: () => {
+    //     mainWindow.webContents.send('change-view', 'selection');
+    //   }
+    // },
+    // {
+    //   label: 'ScreenShot',
+    //   click: () => {
+    //     mainWindow.webContents.send('change-view', 'screenshot');
+    //   }
+    // }
   ];
 
   const menu = Menu.buildFromTemplate(menuTemplate);
