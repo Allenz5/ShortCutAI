@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, ipcMain, globalShortcut, clipboard, screen } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, globalShortcut, clipboard, screen, Tray, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
@@ -25,6 +25,37 @@ function saveConfig(config) {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
   } catch (error) {
     console.error('Error saving config:', error);
+  }
+}
+
+// Configure OS login item so the correct app starts on boot
+function configureAutoStart(config) {
+  try {
+    const wantAutoStart = !!config?.autoStart;
+    if (!wantAutoStart) {
+      app.setLoginItemSettings({ openAtLogin: false });
+      return;
+    }
+
+    // Avoid registering dev Electron on login; only enable when packaged
+    if (!app.isPackaged) {
+      app.setLoginItemSettings({ openAtLogin: false });
+      return;
+    }
+
+    if (process.platform === 'win32') {
+      app.setLoginItemSettings({
+        openAtLogin: true,
+        path: process.execPath,
+      });
+    } else {
+      // macOS/Linux
+      app.setLoginItemSettings({
+        openAtLogin: true,
+      });
+    }
+  } catch (e) {
+    console.error('configureAutoStart error:', e);
   }
 }
 
@@ -66,6 +97,7 @@ let mainWindow;
 let settingsWindow;
 let selectorWindow;
 let currentHotkey;
+let tray;
 let isQuitting = false;
 
 function sendKeys(keys) {
@@ -163,24 +195,31 @@ function registerGlobalHotkey() {
   }
   const ok = globalShortcut.register(accelerator, async () => {
     try {
-      // 1) Copy selection (robust with retries)
-      const selectedText = await copySelectionText();
-      console.log('Copied text:', selectedText);
-      if (!selectedText) return;
+      // Start copying selection immediately but do not block UI
+      const copyPromise = copySelectionText();
 
-      // 2) Show selector overlay to choose profile
+      // Show selector overlay instantly
       const profiles = (inputCfg.profiles || []).slice(0, 9);
       const chosen = await showSelectorOverlay(profiles);
       if (chosen == null) return;
       const profile = profiles[chosen];
       if (!profile) return;
 
-      // 4) Send to GPT
+      // Await copied text (it likely finished while user was choosing)
+      let selectedText = await copyPromise;
+      // If initial copy failed (likely due to focus), try again now that overlay closed
+      if (!selectedText || selectedText.trim() === '') {
+        await sleep(80);
+        selectedText = await copySelectionText();
+      }
+      if (!selectedText || selectedText.trim() === '') return;
+
+      // Send to GPT
       const promptText = `${profile.prompt}\n\n${selectedText}`;
       const result = await callGptWithPrompt(promptText);
       if (!result) return;
 
-      // 5) Paste result
+      // Paste result
       clipboard.writeText(result);
       await new Promise(r => setTimeout(r, 100));
       sendKeys('^v');
@@ -274,9 +313,67 @@ function showSelectorOverlay(profiles) {
       if (!done) resolve(null);
     });
     selectorWindow.webContents.on('did-finish-load', () => {
-      selectorWindow.webContents.send('selector-data', { profiles, token });
-      registerSelectorShortcuts(profiles.length || 0);
+      try {
+        if (!selectorWindow || selectorWindow.isDestroyed()) return;
+        selectorWindow.webContents.send('selector-data', { profiles, token });
+        registerSelectorShortcuts(profiles.length || 0);
+      } catch (e) {
+        // Window may have been closed before load completed
+        console.error('selector did-finish-load handler error:', e);
+      }
     });
+  });
+}
+
+function createTray() {
+  if (tray) return;
+  let icon;
+  try {
+    const iconPath = path.join(__dirname, 'icon.png');
+    if (fs.existsSync(iconPath)) {
+      icon = nativeImage.createFromPath(iconPath);
+    } else {
+      icon = nativeImage.createEmpty();
+    }
+  } catch {
+    icon = nativeImage.createEmpty();
+  }
+
+  tray = new Tray(icon);
+  tray.setToolTip('ShortCutAI');
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Open',
+      click: () => {
+        if (!mainWindow) return;
+        mainWindow.show();
+        if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
+        mainWindow.focus();
+      }
+    },
+    {
+      type: 'separator'
+    },
+    {
+      label: 'Quit',
+      click: () => {
+        isQuitting = true;
+        app.quit();
+      }
+    }
+  ]);
+  tray.setContextMenu(contextMenu);
+
+  tray.on('click', () => {
+    if (!mainWindow) return;
+    if (mainWindow.isVisible()) {
+      mainWindow.focus();
+    } else {
+      mainWindow.show();
+      if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
+      mainWindow.focus();
+    }
   });
 }
 
@@ -291,18 +388,9 @@ function createWindow() {
     },
   });
 
-  // Minimize to taskbar instead of closing the app
-  mainWindow.on('close', (e) => {
-    if (!isQuitting) {
-      e.preventDefault();
-      mainWindow.minimize();
-    }
-  });
-
   // Load from Vite dev server in development, or from built files in production
   if (process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:3000');
-    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
   }
@@ -338,6 +426,14 @@ function createWindow() {
 
   const menu = Menu.buildFromTemplate(menuTemplate);
   Menu.setApplicationMenu(menu);
+
+  // Minimize to tray on close
+  mainWindow.on('close', (e) => {
+    if (isQuitting) return;
+    e.preventDefault();
+    mainWindow.hide();
+    if (process.platform === 'win32') mainWindow.setSkipTaskbar(true);
+  });
 }
 
 function createSettingsWindow() {
@@ -379,16 +475,7 @@ ipcMain.handle('save-config', (event, config) => {
   saveConfig(config);
   
   // Handle auto-start
-  if (config.autoStart) {
-    app.setLoginItemSettings({
-      openAtLogin: true,
-      path: app.getPath('exe')
-    });
-  } else {
-    app.setLoginItemSettings({
-      openAtLogin: false
-    });
-  }
+  configureAutoStart(config);
   
   return { success: true };
 });
@@ -407,13 +494,12 @@ ipcMain.handle('save-inputfield-config', (event, config) => {
 app.whenReady().then(() => {
   createWindow();
   registerGlobalHotkey();
+  createTray();
+  // Ensure login item points to the correct executable after installs/updates
+  try { configureAutoStart(loadConfig()); } catch {}
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
-});
-
-app.on('before-quit', () => {
-  isQuitting = true;
 });
 
 app.on('will-quit', () => {
