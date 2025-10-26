@@ -10,6 +10,19 @@ function Settings() {
     loadSettings();
   }, []);
 
+  // Save with Enter key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+        handleSave();
+      } else if (e.key === 'Escape') {
+        handleCancel();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [autoStart, apiKey]);
+
   const loadSettings = async () => {
     try {
       const config = await window.api.getConfig();

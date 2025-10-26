@@ -195,13 +195,22 @@ function registerGlobalHotkey() {
   }
   const ok = globalShortcut.register(accelerator, async () => {
     try {
+      // Reload config to ensure fresh data
+      const freshConfig = loadInputFieldConfig();
+      const profiles = (freshConfig.profiles || []).slice(0, 9);
+      
+      // Ensure profiles exist
+      if (!profiles || profiles.length === 0) {
+        console.error('No profiles configured');
+        return;
+      }
+      
       // Start copying selection immediately but do not block UI
       const copyPromise = copySelectionText();
 
-      // Show selector overlay instantly
-      const profiles = (inputCfg.profiles || []).slice(0, 9);
+      // Show selector overlay
       const chosen = await showSelectorOverlay(profiles);
-      if (chosen == null) return;
+      if (chosen == null || chosen < 0) return;
       const profile = profiles[chosen];
       if (!profile) return;
 
@@ -232,27 +241,39 @@ function registerGlobalHotkey() {
 
 function showSelectorOverlay(profiles) {
   return new Promise((resolve) => {
+    // Validate profiles exist
+    if (!profiles || profiles.length === 0) {
+      console.error('No profiles available for selector');
+      resolve(null);
+      return;
+    }
+    
     // Close existing if any
     if (selectorWindow) {
       try { selectorWindow.close(); } catch {}
       selectorWindow = null;
     }
     const cursor = screen.getCursorScreenPoint();
-    const width = 280;
-    const height = Math.min(9, profiles.length || 1) * 44 + 20;
+    const width = 260;
+    const height = Math.min(9, profiles.length || 1) * 38 + 16;
     const token = `sel_${Date.now()}`;
+    
+    // Position below cursor, centered - minimal mouse movement
+    const x = Math.max(0, cursor.x - Math.floor(width / 2));
+    const y = cursor.y + 24; // 24px below cursor
 
     selectorWindow = new BrowserWindow({
       width,
       height,
-      x: Math.max(0, cursor.x - Math.floor(width / 2)),
-      y: Math.max(0, cursor.y + 12),
+      x,
+      y,
       frame: false,
       transparent: true,
       resizable: false,
       alwaysOnTop: true,
       skipTaskbar: true,
       movable: false,
+      show: false,  // Add this line - don't show until data is loaded
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true,
@@ -313,14 +334,29 @@ function showSelectorOverlay(profiles) {
       if (!done) resolve(null);
     });
     selectorWindow.webContents.on('did-finish-load', () => {
-      try {
-        if (!selectorWindow || selectorWindow.isDestroyed()) return;
-        selectorWindow.webContents.send('selector-data', { profiles, token });
-        registerSelectorShortcuts(profiles.length || 0);
-      } catch (e) {
-        // Window may have been closed before load completed
-        console.error('selector did-finish-load handler error:', e);
-      }
+      // Wait for window to be fully ready
+      const sendData = () => {
+        try {
+          if (!selectorWindow || selectorWindow.isDestroyed()) return;
+          selectorWindow.webContents.send('selector-data', { profiles, token });
+          registerSelectorShortcuts(profiles.length || 0);
+        } catch (e) {
+          console.error('Error sending selector data:', e);
+        }
+      };
+      
+      // Send immediately
+      sendData();
+      
+      // Send again after delays to ensure receipt
+      setTimeout(sendData, 50);
+      setTimeout(() => {
+        sendData();
+        // Show window only after data is sent
+        if (selectorWindow && !selectorWindow.isDestroyed()) {
+          selectorWindow.show();
+        }
+      }, 150);
     });
   });
 }
@@ -377,16 +413,31 @@ function createTray() {
   });
 }
 
+function centerWindow(win, width, height) {
+  const { screen } = require('electron');
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+  
+  const x = Math.floor((screenWidth - width) / 2);
+  const y = Math.floor((screenHeight - height) / 2);
+  
+  win.setBounds({ x, y, width, height });
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1024,
+    height: 720,
+    minWidth: 880,
+    minHeight: 680,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
+
+  centerWindow(mainWindow, 1024, 680);
 
   // Load from Vite dev server in development, or from built files in production
   if (process.env.NODE_ENV === 'development') {
@@ -403,12 +454,12 @@ function createWindow() {
         createSettingsWindow();
       }
     },
-    {
-      label: 'InputField',
-      click: () => {
-        mainWindow.webContents.send('change-view', 'inputfield');
-      }
-    }
+    // {
+    //   label: 'InputField',
+    //   click: () => {
+    //     mainWindow.webContents.send('change-view', 'inputfield');
+    //   }
+    // }
     // Selection and ScreenShot hidden for now
     // {
     //   label: 'Selection',
@@ -443,10 +494,17 @@ function createSettingsWindow() {
   }
 
   settingsWindow = new BrowserWindow({
-    width: 500,
-    height: 400,
+    width: 520,
+    height: 560,
+    minWidth: 480,
+    minHeight: 560,
+    maxWidth: 600,
+    resizable: false,
     title: 'Settings',
     autoHideMenuBar: true,
+    parent: mainWindow,  // Add this line
+    modal: false,        // Add this line
+    center: true,        // Add this line
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

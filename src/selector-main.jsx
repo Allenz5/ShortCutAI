@@ -45,36 +45,57 @@ function Selector() {
 
   return (
     <div style={{
-      background: 'rgba(30,30,30,0.92)',
-      color: '#fff',
+      background: '#FFFFFF',
       borderRadius: 8,
-      boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
-      padding: 10,
-      border: '1px solid rgba(255,255,255,0.08)'
+      boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.08)',
+      padding: 6,
+      minWidth: 220,
+      maxWidth: 320
     }}>
       {profiles.length === 0 ? (
-        <div style={{ padding: 8, fontSize: 14 }}>No profiles</div>
+        <div style={{ 
+          padding: '16px', 
+          fontSize: 15,
+          color: '#8E8E93',
+          textAlign: 'center'
+        }}>No profiles</div>
       ) : profiles.map((p, i) => (
         <div
           key={p.id}
           onMouseEnter={() => setHighlight(i)}
           onClick={() => choose(i)}
           style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '8px 10px', cursor: 'pointer',
-            background: i === highlight ? 'rgba(255,255,255,0.08)' : 'transparent',
-            borderRadius: 6
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 10,
+            padding: '8px 10px', 
+            cursor: 'pointer',
+            background: i === highlight ? '#F2F2F7' : 'transparent',
+            borderRadius: 6,
+            transition: 'background 0.15s ease',
+            margin: '1px 0'
           }}
         >
           <div style={{
-            width: 22, height: 22, borderRadius: 4,
-            background: '#4a90e2', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 12, fontWeight: 700
+            width: 20, 
+            height: 20, 
+            borderRadius: 4,
+            background: i === highlight ? '#007AFF' : '#E5E5EA',
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            fontSize: 11, 
+            fontWeight: 600,
+            color: i === highlight ? '#FFFFFF' : '#8E8E93',
+            transition: 'all 0.15s ease'
           }}>{i + 1}</div>
-          <div style={{fontSize: 14, fontWeight: 600}}>{p.name}</div>
+          <div style={{
+            fontSize: 15, 
+            fontWeight: 400,
+            color: '#000000'
+          }}>{p.name}</div>
         </div>
       ))}
-      <div style={{height: 2}} />
     </div>
   );
 }

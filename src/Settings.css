@@ -1,49 +1,70 @@
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: 0;
   margin: 0;
-  background-color: #f5f5f5;
+  background: #FFFFFF;
+  overflow: hidden;
 }
 
 .settings-container {
-  background: white;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
+  max-width: 440px;
   margin: 0 auto;
+  padding: 40px 32px 32px 32px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 h1 {
-  margin-top: 0;
-  color: #333;
-  font-size: 24px;
-  margin-bottom: 25px;
+  font-size: 32px;
+  color: #000000;
+  margin-bottom: 32px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
 }
 
 .setting-item {
-  margin-bottom: 25px;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #F2F2F7;
+}
+
+.setting-item:last-of-type {
+  border-bottom: none;
+  margin-bottom: 36px;
+  padding-bottom: 0;
 }
 
 label {
   display: block;
-  margin-bottom: 8px;
-  color: #555;
-  font-weight: 500;
-  font-size: 14px;
+  margin-bottom: 12px;
+  color: #8E8E93;
+  font-weight: 400;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .toggle-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.toggle-label {
+  color: #000000;
+  font-size: 17px;
+  font-weight: 400;
 }
 
 .switch {
   position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 24px;
+  width: 51px;
+  height: 31px;
+  flex-shrink: 0;
 }
 
 .switch input {
@@ -59,104 +80,111 @@ label {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
-  transition: 0.3s;
-  border-radius: 24px;
+  background: #E5E5EA;
+  transition: background 0.2s ease;
+  border-radius: 31px;
 }
 
 .slider:before {
   position: absolute;
   content: '';
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: 0.3s;
+  height: 27px;
+  width: 27px;
+  left: 2px;
+  bottom: 2px;
+  background: #FFFFFF;
+  transition: transform 0.2s ease;
   border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 input:checked + .slider {
-  background-color: #4caf50;
+  background: #34C759;
 }
 
 input:checked + .slider:before {
-  transform: translateX(26px);
-}
-
-.toggle-label {
-  color: #666;
-  font-size: 14px;
+  transform: translateX(20px);
 }
 
 input[type='text'],
 input[type='password'] {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  box-sizing: border-box;
-  transition: border-color 0.3s;
+  padding: 12px 0;
+  border: none;
+  border-bottom: 1px solid #F2F2F7;
+  font-size: 17px;
+  background: transparent;
+  color: #000000;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+  outline: none;
 }
 
 input[type='text']:focus,
 input[type='password']:focus {
-  outline: none;
-  border-color: #4caf50;
+  border-bottom-color: #007AFF;
+}
+
+input[type='password']::placeholder {
+  color: #C7C7CC;
 }
 
 .button-container {
   display: flex;
-  gap: 10px;
-  margin-top: 30px;
+  gap: 12px;
 }
 
 button {
   flex: 1;
-  padding: 10px 20px;
+  padding: 12px 24px;
   border: none;
-  border-radius: 4px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 15px;
   cursor: pointer;
-  transition: background-color 0.3s;
   font-weight: 500;
+  font-family: inherit;
+  transition: opacity 0.2s ease;
+}
+
+button:hover {
+  opacity: 0.8;
 }
 
 .save-btn {
-  background-color: #4caf50;
-  color: white;
-}
-
-.save-btn:hover {
-  background-color: #45a049;
+  background: #007AFF;
+  color: #FFFFFF;
 }
 
 .cancel-btn {
-  background-color: #f1f1f1;
-  color: #333;
-}
-
-.cancel-btn:hover {
-  background-color: #ddd;
+  background: #F2F2F7;
+  color: #000000;
 }
 
 .message {
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 15px;
-  font-size: 14px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 15px;
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message.success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background: #E8F5E9;
+  color: #2E7D32;
 }
 
 .message.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background: #FFEBEE;
+  color: #C62828;
 }
-

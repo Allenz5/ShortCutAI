@@ -62,6 +62,12 @@ function InputField() {
   };
 
   const handleDeleteProfile = (profileId) => {
+    // Prevent deleting the last profile
+    if (profiles.length <= 1) {
+      alert('Cannot delete the last profile. You must have at least one profile.');
+      return;
+    }
+    
     const updatedProfiles = profiles.filter((p) => p.id !== profileId);
     setProfiles(updatedProfiles);
     if (selectedProfileId === profileId) {
@@ -194,7 +200,8 @@ function InputField() {
                 id="profile-name"
                 value={selectedProfile.name}
                 onChange={(e) => handleProfileUpdate('name', e.target.value)}
-                placeholder="Profile name"
+                placeholder="Untitled"
+                autoFocus
               />
             </div>
             <div className="form-group">
@@ -219,7 +226,7 @@ function InputField() {
           <div className="general-config">
             <h2>InputField Configuration</h2>
             <p className="config-description">
-              Configure general settings for the InputField feature.
+              Global hotkey to trigger the profile selector.
             </p>
             <div className="form-group">
               <label htmlFor="hotkey">HotKey Binding</label>
