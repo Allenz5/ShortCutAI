@@ -28,10 +28,16 @@ function Settings() {
   };
 
   const handleSave = async () => {
+    // Validate API key format
+    if (apiKey && apiKey.trim() && !apiKey.startsWith('sk-')) {
+      showMessage('Invalid API key format. OpenAI keys start with "sk-"', 'error');
+      return;
+    }
+
     try {
       const config = {
         autoStart,
-        apiKey,
+        apiKey: apiKey.trim(),
       };
 
       await window.api.saveConfig(config);

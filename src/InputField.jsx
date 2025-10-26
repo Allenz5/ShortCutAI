@@ -18,6 +18,7 @@ function InputField() {
       setGeneralConfig(config.general || { hotkey: '' });
     } catch (error) {
       console.error('Error loading InputField config:', error);
+      alert('Failed to load configuration. Please restart the application.');
     }
   };
 
@@ -29,6 +30,7 @@ function InputField() {
       });
     } catch (error) {
       console.error('Error saving config:', error);
+      alert('Failed to save configuration. Your changes may not be saved.');
     }
   };
 
@@ -37,9 +39,17 @@ function InputField() {
       alert('Maximum 9 profiles allowed (use number keys 1-9 to select).');
       return;
     }
+    
+    // Ensure unique profile names
+    let profileNumber = profiles.length + 1;
+    let newName = `Profile ${profileNumber}`;
+    while (profiles.some(p => p.name === newName)) {
+      profileNumber++;
+      newName = `Profile ${profileNumber}`;
+    }
     const newProfile = {
       id: Date.now().toString(),
-      name: `Profile ${profiles.length + 1}`,
+      name: newName,
       prompt: '',
     };
     const updatedProfiles = [...profiles, newProfile];
@@ -60,6 +70,11 @@ function InputField() {
   };
 
   const handleProfileUpdate = (field, value) => {
+    // Prevent empty profile names
+    if (field === 'name' && !value.trim()) {
+      return;
+    }
+    
     const updatedProfiles = profiles.map((p) =>
       p.id === selectedProfileId ? { ...p, [field]: value } : p
     );
@@ -79,6 +94,12 @@ function InputField() {
 
     e.preventDefault();
     e.stopPropagation();
+
+    // Allow Escape to cancel recording
+    if (e.key === 'Escape') {
+      setIsRecording(false);
+      return;
+    }
 
     // Build the key combination
     const modifiers = [];
@@ -111,6 +132,16 @@ function InputField() {
         window.removeEventListener('keydown', handleKeyDown, true);
       };
     }
+  }, [isRecording, handleKeyDown]);
+
+  // Add this new useEffect:
+  useEffect(() => {
+    // Cleanup recording state on unmount
+    return () => {
+      if (isRecording) {
+        setIsRecording(false);
+      }
+    };
   }, [isRecording]);
 
   // Auto-save on changes
@@ -118,7 +149,7 @@ function InputField() {
     if (profiles.length > 0 || generalConfig.hotkey) {
       saveConfig();
     }
-  }, [profiles, generalConfig]);
+  }, [profiles, generalConfig, saveConfig]);
 
   const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
 
