@@ -12,6 +12,7 @@ export default defineConfig({
         main: path.resolve(__dirname, 'index.html'),
         settings: path.resolve(__dirname, 'settings.html'),
         selector: path.resolve(__dirname, 'selector.html'),
+        floating: path.resolve(__dirname, 'floating.html'),
       },
     },
   },

@@ -223,9 +223,20 @@ function registerGlobalHotkey() {
       }
       if (!selectedText || selectedText.trim() === '') return;
 
+      // Show loading state on floating window
+      if (floatingWindow && !floatingWindow.isDestroyed()) {
+        floatingWindow.webContents.send('ai-processing', true);
+      }
+
       // Send to GPT
       const promptText = `${profile.prompt}\n\n${selectedText}`;
       const result = await callGptWithPrompt(promptText);
+      
+      // Hide loading state
+      if (floatingWindow && !floatingWindow.isDestroyed()) {
+        floatingWindow.webContents.send('ai-processing', false);
+      }
+      
       if (!result) return;
 
       // Paste result
@@ -234,6 +245,10 @@ function registerGlobalHotkey() {
       sendKeys('^v');
     } catch (err) {
       console.error('Hotkey flow error:', err);
+      // Make sure to hide loading state on error
+      if (floatingWindow && !floatingWindow.isDestroyed()) {
+        floatingWindow.webContents.send('ai-processing', false);
+      }
     }
   });
   if (ok) currentHotkey = accelerator;
@@ -413,6 +428,63 @@ function createTray() {
   });
 }
 
+let floatingWindow;
+
+function createFloatingWindow() {
+  if (floatingWindow) return;
+
+  const { screen } = require('electron');
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+  
+  const windowWidth = 64;
+  const windowHeight = 64;
+  const margin = 20;
+
+  floatingWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x: screenWidth - windowWidth - margin,
+    y: screenHeight - windowHeight - margin,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  // Ensure always on top with highest level
+  floatingWindow.setAlwaysOnTop(true, 'screen-saver');
+
+  // Load floating UI
+  if (process.env.NODE_ENV === 'development') {
+    floatingWindow.loadURL('http://localhost:3000/floating.html');
+  } else {
+    floatingWindow.loadFile(path.join(__dirname, 'dist/floating.html'));
+  }
+
+  // Click to show main window
+  floatingWindow.on('closed', () => {
+    floatingWindow = null;
+  });
+
+  // Prevent closing, just hide
+  floatingWindow.on('close', (e) => {
+    e.preventDefault();
+  });
+
+  floatingWindow.on('blur', () => {
+    if (floatingWindow && !floatingWindow.isDestroyed()) {
+      floatingWindow.setAlwaysOnTop(true, 'screen-saver');
+    }
+  });
+}
+
 function centerWindow(win, width, height) {
   const { screen } = require('electron');
   const primaryDisplay = screen.getPrimaryDisplay();
@@ -478,12 +550,19 @@ function createWindow() {
   const menu = Menu.buildFromTemplate(menuTemplate);
   Menu.setApplicationMenu(menu);
 
-  // Minimize to tray on close
+  // Minimize to floating window on close
   mainWindow.on('close', (e) => {
     if (isQuitting) return;
     e.preventDefault();
     mainWindow.hide();
     if (process.platform === 'win32') mainWindow.setSkipTaskbar(true);
+    
+    // Show floating window when main window closes
+    if (!floatingWindow || floatingWindow.isDestroyed()) {
+      createFloatingWindow();
+    } else {
+      floatingWindow.show();
+    }
   });
 }
 
@@ -549,6 +628,20 @@ ipcMain.handle('save-inputfield-config', (event, config) => {
   return { success: true };
 });
 
+ipcMain.handle('show-main-window', () => {
+  if (mainWindow) {
+    mainWindow.show();
+    if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
+    mainWindow.focus();
+    
+    // Hide floating window when main window is shown
+    if (floatingWindow && !floatingWindow.isDestroyed()) {
+      floatingWindow.hide();
+    }
+  }
+  return { success: true };
+});
+
 app.whenReady().then(() => {
   createWindow();
   registerGlobalHotkey();
@@ -556,7 +649,13 @@ app.whenReady().then(() => {
   // Ensure login item points to the correct executable after installs/updates
   try { configureAutoStart(loadConfig()); } catch {}
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    } else if (mainWindow) {
+      mainWindow.show();
+      if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
+      mainWindow.focus();
+    }
   });
 });
 
