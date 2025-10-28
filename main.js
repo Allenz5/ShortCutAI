@@ -52,6 +52,7 @@ function configureAutoStart(config) {
       // macOS/Linux
       app.setLoginItemSettings({
         openAtLogin: true,
+        openAsHidden: false, // explicitly show the app on login for macOS
       });
     }
   } catch (e) {
@@ -454,9 +455,14 @@ function createTray() {
   if (tray) return;
   let icon;
   try {
+    const iconTemplatePath = path.join(__dirname, 'iconTemplate.png');
     const iconPath = path.join(__dirname, 'icon.png');
-    if (fs.existsSync(iconPath)) {
+    if (process.platform === 'darwin' && fs.existsSync(iconTemplatePath)) {
+      icon = nativeImage.createFromPath(iconTemplatePath);
+      try { icon.setTemplateImage(true); } catch {}
+    } else if (fs.existsSync(iconPath)) {
       icon = nativeImage.createFromPath(iconPath);
+      if (process.platform === 'darwin') { try { icon.setTemplateImage(true); } catch {} }
     } else {
       icon = nativeImage.createEmpty();
     }
@@ -465,21 +471,13 @@ function createTray() {
   }
 
   tray = new Tray(icon);
+  // If no image is available, show a short title in the macOS menu bar
+  if (process.platform === 'darwin' && icon.isEmpty && icon.isEmpty()) {
+    try { tray.setTitle('AI'); } catch {}
+  }
   tray.setToolTip('ShortCutAI');
 
   const contextMenu = Menu.buildFromTemplate([
-    {
-      label: 'Open',
-      click: () => {
-        if (!mainWindow) return;
-        mainWindow.show();
-        if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
-        mainWindow.focus();
-      }
-    },
-    {
-      type: 'separator'
-    },
     {
       label: 'Quit',
       click: () => {
@@ -495,9 +493,16 @@ function createTray() {
     if (mainWindow.isVisible()) {
       mainWindow.focus();
     } else {
+      if (process.platform === 'darwin') {
+        try { app.dock.show(); } catch {}
+      }
       mainWindow.show();
       if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
       mainWindow.focus();
+      // Hide floating window when main window is shown
+      if (floatingWindow && !floatingWindow.isDestroyed()) {
+        floatingWindow.hide();
+      }
     }
   });
 }
@@ -534,6 +539,22 @@ function createFloatingWindow() {
 
   // Ensure always on top with highest level
   floatingWindow.setAlwaysOnTop(true, 'screen-saver');
+
+  // Right-click (context menu) with only Quit
+  const buildFloatingContextMenu = () => Menu.buildFromTemplate([
+    {
+      label: 'Quit',
+      click: () => {
+        isQuitting = true;
+        app.quit();
+      }
+    }
+  ]);
+  try {
+    floatingWindow.webContents.on('context-menu', () => {
+      try { buildFloatingContextMenu().popup({ window: floatingWindow }); } catch {}
+    });
+  } catch {}
 
   // Load floating UI
   if (process.env.NODE_ENV === 'development') {
@@ -601,6 +622,9 @@ function createWindow() {
     e.preventDefault();
     mainWindow.hide();
     if (process.platform === 'win32') mainWindow.setSkipTaskbar(true);
+    if (process.platform === 'darwin') {
+      try { app.dock.hide(); } catch {}
+    }
     
     // Show floating window when main window closes
     if (!floatingWindow || floatingWindow.isDestroyed()) {
@@ -686,6 +710,9 @@ ipcMain.handle('open-settings-window', () => {
 
 ipcMain.handle('show-main-window', () => {
   if (mainWindow) {
+    if (process.platform === 'darwin') {
+      try { app.dock.show(); } catch {}
+    }
     mainWindow.show();
     if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
     mainWindow.focus();
@@ -704,13 +731,32 @@ app.whenReady().then(() => {
   createTray();
   // Ensure login item points to the correct executable after installs/updates
   try { configureAutoStart(loadConfig()); } catch {}
+  try {
+    if (app.isPackaged && process.platform === 'darwin') {
+      const st = app.getLoginItemSettings();
+      if (st?.openAtLogin) {
+        // Make sure the main window is visible on login
+        if (mainWindow) {
+          try { app.dock.show(); } catch {}
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      }
+    }
+  } catch {}
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     } else if (mainWindow) {
+      if (process.platform === 'darwin') {
+        try { app.dock.show(); } catch {}
+      }
       mainWindow.show();
       if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
       mainWindow.focus();
+      if (floatingWindow && !floatingWindow.isDestroyed()) {
+        floatingWindow.hide();
+      }
     }
   });
 });
