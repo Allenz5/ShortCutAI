@@ -435,9 +435,12 @@ function createTray() {
   try {
     const iconTemplatePath = path.join(__dirname, 'iconTemplate.png');
     const iconPath = path.join(__dirname, 'icon.png');
-    if (process.platform === 'darwin' && fs.existsSync(iconTemplatePath)) {
+    // Prefer the same icon used for macOS menu bar (iconTemplate.png) on all platforms
+    if (fs.existsSync(iconTemplatePath)) {
       icon = nativeImage.createFromPath(iconTemplatePath);
-      try { icon.setTemplateImage(true); } catch {}
+      if (process.platform === 'darwin') {
+        try { icon.setTemplateImage(true); } catch {}
+      }
     } else if (fs.existsSync(iconPath)) {
       icon = nativeImage.createFromPath(iconPath);
       if (process.platform === 'darwin') { try { icon.setTemplateImage(true); } catch {} }
