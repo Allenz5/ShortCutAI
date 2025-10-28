@@ -11,4 +11,5 @@ contextBridge.exposeInMainWorld('api', {
   chooseSelectorIndex: (token, index) => ipcRenderer.send(`selector-chosen:${token}`, index),
   showMainWindow: () => ipcRenderer.invoke('show-main-window'),
   onAIProcessing: (callback) => ipcRenderer.on('ai-processing', (event, isProcessing) => callback(isProcessing)),
+  openSettings: () => ipcRenderer.invoke('open-settings-window'),
 });

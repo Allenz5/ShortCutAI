@@ -11,12 +11,16 @@
 .left-panel {
   width: 220px;
   background: #FAFAFA;
-  padding: 16px 10px;
+  padding: 0 10px 16px 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
   border-right: 1px solid #F2F2F7;
   flex-shrink: 0;
+}
+
+.left-spacer {
+  flex: 1;
 }
 
 .config-btn {
@@ -30,7 +34,10 @@
   cursor: pointer;
   text-align: left;
   transition: background 0.15s ease;
+  margin-top: 8px;
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
 }
 
 .config-btn:hover {
@@ -41,6 +48,15 @@
   background: #007AFF;
   color: #FFFFFF;
   font-weight: 500;
+}
+
+.config-btn .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
 }
 
 .add-profile-btn {
@@ -54,7 +70,7 @@
   cursor: pointer;
   text-align: left;
   transition: background 0.15s ease;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .add-profile-btn:hover {
@@ -67,6 +83,32 @@
   gap: 2px;
   overflow-y: auto;
   flex: 1;
+}
+
+.menu-title {
+  margin: 10px 8px 6px;
+  color: #8E8E93;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.settings-btn {
+  padding: 7px 12px;
+  background: transparent;
+  color: #000000;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+  margin-top: 8px;
+}
+
+.settings-btn:hover {
+  background: #F2F2F7;
 }
 
 .profile-item {
@@ -96,7 +138,7 @@
 /* Right Panel */
 .right-panel {
   flex: 1;
-  padding: 40px 64px;
+  padding: 0 64px 40px;
   overflow: hidden;
   background: #FFFFFF;
   max-width: 100%;

@@ -16,16 +16,19 @@ body {
 .app {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   min-height: 100vh;
-  padding: 48px 32px;
 }
 
 .app:has(.inputfield-container) {
   padding: 0;
-  align-items: stretch;
-  justify-content: stretch;
+}
+
+.content-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 24px 32px;
 }
 
 .view-content {
@@ -97,4 +100,45 @@ h1 {
 
 strong {
   font-weight: 600;
+}
+
+/* Menu bar styles */
+.menu-bar {
+  -webkit-app-region: drag;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 10px;
+  border-bottom: 1px solid #E5E5EA;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+.menu-bar button {
+  -webkit-app-region: no-drag;
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #000000;
+  cursor: default;
+}
+
+.menu-bar button:hover {
+  background: #F2F2F7;
+}
+
+.menu-sep {
+  width: 1px;
+  height: 18px;
+  background: #E5E5EA;
+  margin: 0 4px;
+}
+
+/* Remove gaps on left/top when InputField is active */
+.app:has(.inputfield-container) .content-container {
+  padding: 0;
 }

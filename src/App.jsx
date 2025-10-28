@@ -58,7 +58,9 @@ function App() {
 
   return (
     <div className="app">
-      {renderContent()}
+      <div className="content-container">
+        {renderContent()}
+      </div>
     </div>
   );
 }

@@ -101,14 +101,75 @@ let tray;
 let isQuitting = false;
 
 function sendKeys(keys) {
-  // Windows-only implementation via PowerShell SendKeys
-  if (process.platform !== 'win32') return;
-  const script = `$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys('${keys}')`;
-  spawn('powershell', ['-WindowStyle', 'Hidden', '-Command', script]);
+  try {
+    if (process.platform === 'win32') {
+      const script = `$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys('${keys}')`;
+      spawn('powershell', ['-WindowStyle', 'Hidden', '-Command', script]);
+      return;
+    }
+    if (process.platform === 'darwin') {
+      const isCtrlCombo = typeof keys === 'string' && keys.startsWith('^') && keys.length === 2;
+      if (!isCtrlCombo) return;
+      const ch = keys.slice(1).toLowerCase();
+      const keyCode = ch === 'c' ? 8 : ch === 'v' ? 9 : undefined; // C:8, V:9
+      const appleScript = keyCode != null
+        ? `tell application "System Events"
+try
+  key code ${keyCode} using {command down}
+on error
+  keystroke "${ch}" using {command down}
+end try
+end tell`
+        : `tell application "System Events" to keystroke "${ch}" using {command down}`;
+      spawn('osascript', ['-e', appleScript]);
+      return;
+    }
+  } catch (e) {
+    console.error('sendKeys error:', e);
+  }
 }
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// macOS: get the name of the currently frontmost app
+async function getFrontmostAppMac() {
+  if (process.platform !== 'darwin') return null;
+  const script = 'tell application "System Events" to get name of first application process whose frontmost is true';
+  try {
+    const result = await new Promise((resolve) => {
+      try {
+        const child = spawn('osascript', ['-e', script]);
+        let out = '';
+        child.stdout.on('data', (d) => { out += String(d || ''); });
+        child.on('close', () => resolve(out.trim() || null));
+        child.on('error', () => resolve(null));
+      } catch {
+        resolve(null);
+      }
+    });
+    return result || null;
+  } catch {
+    return null;
+  }
+}
+
+// macOS: activate an app by name
+async function activateAppMac(appName) {
+  if (process.platform !== 'darwin' || !appName) return;
+  const script = `tell application "${appName.replace(/"/g, '\\"')}" to activate`;
+  try {
+    await new Promise((resolve) => {
+      try {
+        const child = spawn('osascript', ['-e', script]);
+        child.on('close', () => resolve());
+        child.on('error', () => resolve());
+      } catch {
+        resolve();
+      }
+    });
+  } catch {}
 }
 
 async function copySelectionText() {
@@ -205,6 +266,9 @@ function registerGlobalHotkey() {
         return;
       }
       
+      // Capture the current frontmost app on macOS to restore focus later
+      const previousApp = process.platform === 'darwin' ? await getFrontmostAppMac() : null;
+
       // Start copying selection immediately but do not block UI
       const copyPromise = copySelectionText();
 
@@ -223,6 +287,8 @@ function registerGlobalHotkey() {
       }
       if (!selectedText || selectedText.trim() === '') return;
 
+      console.log('[ShortCutAI] Copied text:', selectedText);
+
       // Show loading state on floating window
       if (floatingWindow && !floatingWindow.isDestroyed()) {
         floatingWindow.webContents.send('ai-processing', true);
@@ -239,10 +305,18 @@ function registerGlobalHotkey() {
       
       if (!result) return;
 
-      // Paste result
+      console.log('[ShortCutAI] GPT output:', result);
+
+      // Restore focus to previous app on macOS and paste
+      if (process.platform === 'darwin' && previousApp) {
+        await activateAppMac(previousApp);
+        await sleep(150);
+      }
       clipboard.writeText(result);
-      await new Promise(r => setTimeout(r, 100));
-      sendKeys('^v');
+      await new Promise(r => setTimeout(r, 150));
+      if (process.platform === 'darwin' || process.platform === 'win32') {
+        sendKeys('^v');
+      }
     } catch (err) {
       console.error('Hotkey flow error:', err);
       // Make sure to hide loading state on error
@@ -518,37 +592,8 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
   }
   
-  // Create custom menu
-  const menuTemplate = [
-    {
-      label: 'Settings',
-      click: () => {
-        createSettingsWindow();
-      }
-    },
-    // {
-    //   label: 'InputField',
-    //   click: () => {
-    //     mainWindow.webContents.send('change-view', 'inputfield');
-    //   }
-    // }
-    // Selection and ScreenShot hidden for now
-    // {
-    //   label: 'Selection',
-    //   click: () => {
-    //     mainWindow.webContents.send('change-view', 'selection');
-    //   }
-    // },
-    // {
-    //   label: 'ScreenShot',
-    //   click: () => {
-    //     mainWindow.webContents.send('change-view', 'screenshot');
-    //   }
-    // }
-  ];
-
-  const menu = Menu.buildFromTemplate(menuTemplate);
-  Menu.setApplicationMenu(menu);
+  // Remove application menu
+  try { Menu.setApplicationMenu(null); } catch {}
 
   // Minimize to floating window on close
   mainWindow.on('close', (e) => {
@@ -626,6 +671,17 @@ ipcMain.handle('save-inputfield-config', (event, config) => {
   // Re-register global hotkey if changed
   registerGlobalHotkey();
   return { success: true };
+});
+
+// Open Settings window from renderer
+ipcMain.handle('open-settings-window', () => {
+  try {
+    createSettingsWindow();
+    return { success: true };
+  } catch (e) {
+    console.error('Failed to open settings window:', e);
+    return { success: false, error: e?.message || 'Unknown error' };
+  }
 });
 
 ipcMain.handle('show-main-window', () => {
