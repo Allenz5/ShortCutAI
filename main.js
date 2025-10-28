@@ -16,7 +16,7 @@ function loadConfig() {
   } catch (error) {
     console.error('Error loading config:', error);
   }
-  return { autoStart: false, apiKey: '' };
+  return { autoStart: true, apiKey: '' };
 }
 
 // Save config
@@ -32,29 +32,7 @@ function saveConfig(config) {
 function configureAutoStart(config) {
   try {
     const wantAutoStart = !!config?.autoStart;
-    if (!wantAutoStart) {
-      app.setLoginItemSettings({ openAtLogin: false });
-      return;
-    }
-
-    // Avoid registering dev Electron on login; only enable when packaged
-    if (!app.isPackaged) {
-      app.setLoginItemSettings({ openAtLogin: false });
-      return;
-    }
-
-    if (process.platform === 'win32') {
-      app.setLoginItemSettings({
-        openAtLogin: true,
-        path: process.execPath,
-      });
-    } else {
-      // macOS/Linux
-      app.setLoginItemSettings({
-        openAtLogin: true,
-        openAsHidden: false, // explicitly show the app on login for macOS
-      });
-    }
+    app.setLoginItemSettings({ openAtLogin: wantAutoStart });
   } catch (e) {
     console.error('configureAutoStart error:', e);
   }
@@ -482,6 +460,11 @@ function createTray() {
       label: 'Quit',
       click: () => {
         isQuitting = true;
+        try {
+          if (floatingWindow && !floatingWindow.isDestroyed()) {
+            floatingWindow.close();
+          }
+        } catch {}
         app.quit();
       }
     }
@@ -546,6 +529,11 @@ function createFloatingWindow() {
       label: 'Quit',
       click: () => {
         isQuitting = true;
+        try {
+          if (floatingWindow && !floatingWindow.isDestroyed()) {
+            floatingWindow.close();
+          }
+        } catch {}
         app.quit();
       }
     }
@@ -570,7 +558,9 @@ function createFloatingWindow() {
 
   // Prevent closing, just hide
   floatingWindow.on('close', (e) => {
-    e.preventDefault();
+    if (!isQuitting) {
+      e.preventDefault();
+    }
   });
 
   floatingWindow.on('blur', () => {
