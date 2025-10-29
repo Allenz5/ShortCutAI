@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './InputField.css';
+import { useSelection } from './Selection';
 
 function InputField() {
+  const [activeSection, setActiveSection] = useState('inputfield'); // 'inputfield' | 'selection'
   const [profiles, setProfiles] = useState([]);
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [generalConfig, setGeneralConfig] = useState({ hotkey: '' });
@@ -159,13 +161,30 @@ function InputField() {
 
   const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
 
+  // Selection section state and handlers (logic housed in separate file)
+  const selection = useSelection();
+
+  // Derived bindings based on active section
+  const isInputField = activeSection === 'inputfield';
+  const sectionProfiles = isInputField ? profiles : selection.profiles;
+  const sectionSelectedProfileId = isInputField ? selectedProfileId : selection.selectedProfileId;
+  const sectionSelectedProfile = isInputField ? selectedProfile : selection.selectedProfile;
+  const handleAddSectionProfile = isInputField ? handleAddProfile : selection.handleAddProfile;
+  const handleSectionProfileClick = isInputField ? handleProfileClick : selection.handleProfileClick;
+  const handleSectionDeleteProfile = isInputField ? handleDeleteProfile : selection.handleDeleteProfile;
+  const handleSectionProfileUpdate = isInputField ? handleProfileUpdate : selection.handleProfileUpdate;
+  const sectionGeneralConfig = isInputField ? generalConfig : selection.generalConfig;
+  const handleSectionGeneralConfigUpdate = isInputField ? handleGeneralConfigUpdate : selection.handleGeneralConfigUpdate;
+  const sectionIsRecording = isInputField ? isRecording : selection.isRecording;
+  const handleSectionStartRecording = isInputField ? handleStartRecording : selection.handleStartRecording;
+
   return (
     <div className="inputfield-container">
       {/* Left Panel */}
       <div className="left-panel">
-        <button 
-          className={`config-btn ${selectedProfileId === null ? 'active' : ''}`}
-          onClick={() => setSelectedProfileId(null)}
+        <button
+          className={`config-btn ${isInputField ? 'active' : ''}`}
+          onClick={() => setActiveSection('inputfield')}
         >
           <span className="icon" aria-hidden>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -175,16 +194,26 @@ function InputField() {
           </span>
           <span>InputField</span>
         </button>
+        <button
+          className={`config-btn ${!isInputField ? 'active' : ''}`}
+          onClick={() => setActiveSection('selection')}
+        >
+          <span className="icon" aria-hidden>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 3h18v4H3z" />
+              <path d="M3 10h18v11H3z" />
+            </svg>
+          </span>
+          <span>Selection</span>
+        </button>
         <div className="menu-title">Profiles</div>
-        <button className="add-profile-btn" onClick={handleAddProfile}>+ Add Profile</button>
+        <button className="add-profile-btn" onClick={handleAddSectionProfile}>+ Add Profile</button>
         <div className="profile-list">
-          {profiles.map((profile) => (
+          {sectionProfiles.map((profile) => (
             <button
               key={profile.id}
-              className={`profile-item ${
-                selectedProfileId === profile.id ? 'active' : ''
-              }`}
-              onClick={() => handleProfileClick(profile.id)}
+              className={`profile-item ${sectionSelectedProfileId === profile.id ? 'active' : ''}`}
+              onClick={() => handleSectionProfileClick(profile.id)}
             >
               {profile.name}
             </button>
@@ -196,7 +225,7 @@ function InputField() {
 
       {/* Right Panel */}
       <div className="right-panel">
-        {selectedProfile ? (
+        {sectionSelectedProfile ? (
           // Profile Editor
           <div className="profile-editor">
             <h2>Profile Settings</h2>
@@ -205,8 +234,8 @@ function InputField() {
               <input
                 type="text"
                 id="profile-name"
-                value={selectedProfile.name}
-                onChange={(e) => handleProfileUpdate('name', e.target.value)}
+                value={sectionSelectedProfile.name}
+                onChange={(e) => handleSectionProfileUpdate('name', e.target.value)}
                 placeholder="Untitled"
                 autoFocus
               />
@@ -215,15 +244,15 @@ function InputField() {
               <label htmlFor="profile-prompt">Prompt</label>
               <textarea
                 id="profile-prompt"
-                value={selectedProfile.prompt}
-                onChange={(e) => handleProfileUpdate('prompt', e.target.value)}
+                value={sectionSelectedProfile.prompt}
+                onChange={(e) => handleSectionProfileUpdate('prompt', e.target.value)}
                 placeholder="Enter your prompt here..."
                 rows={10}
               />
             </div>
             <button
               className="delete-btn"
-              onClick={() => handleDeleteProfile(selectedProfile.id)}
+              onClick={() => handleSectionDeleteProfile(sectionSelectedProfile.id)}
             >
               Delete Profile
             </button>
@@ -231,21 +260,19 @@ function InputField() {
         ) : (
           // General Configuration
           <div className="general-config">
-            <h2>InputField Configuration</h2>
-            <p className="config-description">
-              Global hotkey to trigger the profile selector.
-            </p>
+            <h2>{isInputField ? 'InputField Configuration' : 'Selection Configuration'}</h2>
+            <p className="config-description">Global hotkey to trigger the profile selector.</p>
             <div className="form-group">
               <label htmlFor="hotkey">HotKey Binding</label>
               <div className="hotkey-input-group">
                 <div className="hotkey-display">
-                  {generalConfig.hotkey || 'Not set'}
+                  {sectionGeneralConfig.hotkey || 'Not set'}
                 </div>
                 <button
-                  className={`record-hotkey-btn ${isRecording ? 'recording' : ''}`}
-                  onClick={handleStartRecording}
+                  className={`record-hotkey-btn ${sectionIsRecording ? 'recording' : ''}`}
+                  onClick={handleSectionStartRecording}
                 >
-                  {isRecording ? '⏺ Press a key combination...' : '🎯 Record Hotkey'}
+                  {sectionIsRecording ? '⏺ Press a key combination...' : '🎯 Record Hotkey'}
                 </button>
               </div>
               <small className="help-text">
