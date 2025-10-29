@@ -175,8 +175,6 @@ function InputField() {
   const handleSectionProfileUpdate = isInputField ? handleProfileUpdate : selection.handleProfileUpdate;
   const sectionGeneralConfig = isInputField ? generalConfig : selection.generalConfig;
   const handleSectionGeneralConfigUpdate = isInputField ? handleGeneralConfigUpdate : selection.handleGeneralConfigUpdate;
-  const sectionIsRecording = isInputField ? isRecording : selection.isRecording;
-  const handleSectionStartRecording = isInputField ? handleStartRecording : selection.handleStartRecording;
 
   return (
     <div className="inputfield-container">
@@ -261,24 +259,43 @@ function InputField() {
           // General Configuration
           <div className="general-config">
             <h2>{isInputField ? 'InputField Configuration' : 'Selection Configuration'}</h2>
-            <p className="config-description">Global hotkey to trigger the profile selector.</p>
-            <div className="form-group">
-              <label htmlFor="hotkey">HotKey Binding</label>
-              <div className="hotkey-input-group">
-                <div className="hotkey-display">
-                  {sectionGeneralConfig.hotkey || 'Not set'}
+            {isInputField ? (
+              <>
+                <p className="config-description">Global hotkey to trigger the profile selector.</p>
+                <div className="form-group">
+                  <label htmlFor="hotkey">HotKey Binding</label>
+                  <div className="hotkey-input-group">
+                    <div className="hotkey-display">
+                      {sectionGeneralConfig.hotkey || 'Not set'}
+                    </div>
+                    <button
+                      className={`record-hotkey-btn ${isRecording ? 'recording' : ''}`}
+                      onClick={handleStartRecording}
+                    >
+                      {isRecording ? '⏺ Press a key combination...' : '🎯 Record Hotkey'}
+                    </button>
+                  </div>
+                  <small className="help-text">
+                    Click "Record Hotkey" and press your desired key combination
+                  </small>
                 </div>
-                <button
-                  className={`record-hotkey-btn ${sectionIsRecording ? 'recording' : ''}`}
-                  onClick={handleSectionStartRecording}
-                >
-                  {sectionIsRecording ? '⏺ Press a key combination...' : '🎯 Record Hotkey'}
-                </button>
-              </div>
-              <small className="help-text">
-                Click "Record Hotkey" and press your desired key combination
-              </small>
-            </div>
+              </>
+            ) : (
+              <>
+                <p className="config-description">Enable or disable Selection feature.</p>
+                <div className="form-group">
+                  <label htmlFor="enable-selection">Enable Selection</label>
+                  <div className="hotkey-input-group" style={{ borderBottom: 'none', padding: 0 }}>
+                    <input
+                      id="enable-selection"
+                      type="checkbox"
+                      checked={Boolean(sectionGeneralConfig.enabled)}
+                      onChange={(e) => handleSectionGeneralConfigUpdate('enabled', e.target.checked)}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

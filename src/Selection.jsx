@@ -3,8 +3,7 @@ import { useState, useEffect } from 'react';
 export function useSelection() {
   const [profiles, setProfiles] = useState([]);
   const [selectedProfileId, setSelectedProfileId] = useState(null);
-  const [generalConfig, setGeneralConfig] = useState({ hotkey: '' });
-  const [isRecording, setIsRecording] = useState(false);
+  const [generalConfig, setGeneralConfig] = useState({ enabled: true });
 
   useEffect(() => {
     loadSelectionConfig();
@@ -15,7 +14,9 @@ export function useSelection() {
       // Optional API: implement in main/preload when ready
       const config = await window.api.getSelectionConfig();
       setProfiles(config.profiles || []);
-      setGeneralConfig(config.general || { hotkey: '' });
+      const general = config.general || {};
+      const enabled = general.enabled !== undefined ? Boolean(general.enabled) : true;
+      setGeneralConfig({ enabled });
     } catch (error) {
       // Graceful: if not implemented yet, keep defaults
       console.warn('Selection config API not available yet; using defaults');
@@ -92,18 +93,9 @@ export function useSelection() {
     setGeneralConfig({ ...generalConfig, [field]: value });
   };
 
-  const handleStartRecording = () => {
-    setIsRecording(true);
-  };
-
-  // Reset recording state when needed (called from parent)
-  const handleStopRecording = () => {
-    setIsRecording(false);
-  };
-
   // Auto-save on changes
   useEffect(() => {
-    if (profiles.length > 0 || generalConfig.hotkey) {
+    if (profiles.length > 0 || typeof generalConfig.enabled === 'boolean') {
       saveConfig();
     }
   }, [profiles, generalConfig]);
@@ -115,15 +107,11 @@ export function useSelection() {
     selectedProfileId,
     setSelectedProfileId,
     generalConfig,
-    isRecording,
-    setIsRecording,
     handleAddProfile,
     handleProfileClick,
     handleDeleteProfile,
     handleProfileUpdate,
     handleGeneralConfigUpdate,
-    handleStartRecording,
-    handleStopRecording,
     selectedProfile,
   };
 }
