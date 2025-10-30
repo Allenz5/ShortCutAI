@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 export function useSelection() {
   const [profiles, setProfiles] = useState([]);
   const [selectedProfileId, setSelectedProfileId] = useState(null);
-  const [generalConfig, setGeneralConfig] = useState({ enabled: true });
+  const [generalConfig, setGeneralConfig] = useState({ hotkey: '' });
 
   useEffect(() => {
     loadSelectionConfig();
@@ -11,12 +11,9 @@ export function useSelection() {
 
   const loadSelectionConfig = async () => {
     try {
-      // Optional API: implement in main/preload when ready
       const config = await window.api.getSelectionConfig();
       setProfiles(config.profiles || []);
-      const general = config.general || {};
-      const enabled = general.enabled !== undefined ? Boolean(general.enabled) : true;
-      setGeneralConfig({ enabled });
+      setGeneralConfig(config.general || { hotkey: '' });
     } catch (error) {
       // Graceful: if not implemented yet, keep defaults
       console.warn('Selection config API not available yet; using defaults');
@@ -95,7 +92,7 @@ export function useSelection() {
 
   // Auto-save on changes
   useEffect(() => {
-    if (profiles.length > 0 || typeof generalConfig.enabled === 'boolean') {
+    if (profiles.length > 0 || generalConfig.hotkey) {
       saveConfig();
     }
   }, [profiles, generalConfig]);

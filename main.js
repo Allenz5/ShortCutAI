@@ -6,6 +6,7 @@ let OpenAI;
 
 const configPath = path.join(app.getPath('userData'), 'config.json');
 const inputFieldConfigPath = path.join(app.getPath('userData'), 'inputfield-config.json');
+const selectionConfigPath = path.join(app.getPath('userData'), 'selection-config.json');
 
 // Load or initialize config
 function loadConfig() {
@@ -72,10 +73,44 @@ function saveInputFieldConfig(config) {
   }
 }
 
+// Load or initialize Selection config
+function loadSelectionConfig() {
+  try {
+    if (fs.existsSync(selectionConfigPath)) {
+      return JSON.parse(fs.readFileSync(selectionConfigPath, 'utf8'));
+    }
+  } catch (error) {
+    console.error('Error loading Selection config:', error);
+  }
+  // Default Selection config mirrors InputField structure
+  const defaultConfig = {
+    profiles: [
+      {
+        id: 'default-editgrammar',
+        name: 'EditGrammar',
+        prompt: 'Please fix the grammar and spelling in the following text while keeping the original meaning:'
+      }
+    ],
+    general: { hotkey: '' }
+  };
+  saveSelectionConfig(defaultConfig);
+  return defaultConfig;
+}
+
+// Save Selection config
+function saveSelectionConfig(config) {
+  try {
+    fs.writeFileSync(selectionConfigPath, JSON.stringify(config, null, 2));
+  } catch (error) {
+    console.error('Error saving Selection config:', error);
+  }
+}
+
 let mainWindow;
 let settingsWindow;
 let selectorWindow;
 let currentHotkey;
+let currentSelectionHotkey;
 let tray;
 let isQuitting = false;
 
@@ -217,9 +252,11 @@ function enforceProfileLimit(config) {
 
 function registerGlobalHotkey() {
   const inputCfg = loadInputFieldConfig();
-  const hotkey = inputCfg?.general?.hotkey;
-  if (!hotkey) return;
+  const selectionCfg = loadSelectionConfig();
+  const inputHotkey = inputCfg?.general?.hotkey;
+  const selectionHotkey = selectionCfg?.general?.hotkey;
   const toAccelerator = (hk) => {
+    if (!hk) return '';
     const parts = hk.split('+');
     return parts.map(p => {
       if (p === 'Ctrl') return 'CommandOrControl';
@@ -227,84 +264,120 @@ function registerGlobalHotkey() {
       return p;
     }).join('+');
   };
-  const accelerator = toAccelerator(hotkey);
-  // Unregister previous
+
+  // Unregister previous InputField hotkey
   if (currentHotkey) {
     globalShortcut.unregister(currentHotkey);
     currentHotkey = undefined;
   }
-  const ok = globalShortcut.register(accelerator, async () => {
-    try {
-      // Reload config to ensure fresh data
-      const freshConfig = loadInputFieldConfig();
-      const profiles = (freshConfig.profiles || []).slice(0, 9);
-      
-      // Ensure profiles exist
-      if (!profiles || profiles.length === 0) {
-        console.error('No profiles configured');
-        return;
+  // Unregister previous Selection hotkey
+  if (currentSelectionHotkey) {
+    globalShortcut.unregister(currentSelectionHotkey);
+    currentSelectionHotkey = undefined;
+  }
+
+  // Register InputField hotkey if present
+  if (inputHotkey) {
+    const accelerator = toAccelerator(inputHotkey);
+    const ok = globalShortcut.register(accelerator, async () => {
+      try {
+        const freshConfig = loadInputFieldConfig();
+        const profiles = (freshConfig.profiles || []).slice(0, 9);
+        if (!profiles || profiles.length === 0) {
+          console.error('No profiles configured');
+          return;
+        }
+        const previousApp = process.platform === 'darwin' ? await getFrontmostAppMac() : null;
+        const copyPromise = copySelectionText();
+        const chosen = await showSelectorOverlay(profiles);
+        if (chosen == null || chosen < 0) return;
+        const profile = profiles[chosen];
+        if (!profile) return;
+        let selectedText = await copyPromise;
+        if (!selectedText || selectedText.trim() === '') {
+          await sleep(80);
+          selectedText = await copySelectionText();
+        }
+        if (!selectedText || selectedText.trim() === '') return;
+        console.log('[ShortCutAI] Copied text:', selectedText);
+        if (floatingWindow && !floatingWindow.isDestroyed()) {
+          floatingWindow.webContents.send('ai-processing', true);
+        }
+        const promptText = `${profile.prompt}\n\n${selectedText}`;
+        const result = await callGptWithPrompt(promptText);
+        if (floatingWindow && !floatingWindow.isDestroyed()) {
+          floatingWindow.webContents.send('ai-processing', false);
+        }
+        if (!result) return;
+        console.log('[ShortCutAI] GPT output:', result);
+        if (process.platform === 'darwin' && previousApp) {
+          await activateAppMac(previousApp);
+          await sleep(150);
+        }
+        clipboard.writeText(result);
+        await new Promise(r => setTimeout(r, 150));
+        if (process.platform === 'darwin' || process.platform === 'win32') {
+          sendKeys('^v');
+        }
+      } catch (err) {
+        console.error('Hotkey flow error:', err);
+        if (floatingWindow && !floatingWindow.isDestroyed()) {
+          floatingWindow.webContents.send('ai-processing', false);
+        }
       }
-      
-      // Capture the current frontmost app on macOS to restore focus later
-      const previousApp = process.platform === 'darwin' ? await getFrontmostAppMac() : null;
+    });
+    if (ok) currentHotkey = accelerator;
+  }
 
-      // Start copying selection immediately but do not block UI
-      const copyPromise = copySelectionText();
-
-      // Show selector overlay
-      const chosen = await showSelectorOverlay(profiles);
-      if (chosen == null || chosen < 0) return;
-      const profile = profiles[chosen];
-      if (!profile) return;
-
-      // Await copied text (it likely finished while user was choosing)
-      let selectedText = await copyPromise;
-      // If initial copy failed (likely due to focus), try again now that overlay closed
-      if (!selectedText || selectedText.trim() === '') {
-        await sleep(80);
-        selectedText = await copySelectionText();
+  // Register Selection hotkey if present (but DO NOT paste result)
+  if (selectionHotkey) {
+    const accelerator = toAccelerator(selectionHotkey);
+    const ok = globalShortcut.register(accelerator, async () => {
+      try {
+        const freshConfig = loadSelectionConfig();
+        const profiles = (freshConfig.profiles || []).slice(0, 9);
+        if (!profiles || profiles.length === 0) {
+          console.error('No Selection profiles configured');
+          return;
+        }
+        const previousApp = process.platform === 'darwin' ? await getFrontmostAppMac() : null;
+        const copyPromise = copySelectionText();
+        const chosen = await showSelectorOverlay(profiles);
+        if (chosen == null || chosen < 0) return;
+        const profile = profiles[chosen];
+        if (!profile) return;
+        let selectedText = await copyPromise;
+        if (!selectedText || selectedText.trim() === '') {
+          await sleep(80);
+          selectedText = await copySelectionText();
+        }
+        if (!selectedText || selectedText.trim() === '') return;
+        console.log('[ShortCutAI] Selection Copied text:', selectedText);
+        if (floatingWindow && !floatingWindow.isDestroyed()) {
+          floatingWindow.webContents.send('ai-processing', true);
+        }
+        const promptText = `${profile.prompt}\n\n${selectedText}`;
+        const result = await callGptWithPrompt(promptText);
+        if (floatingWindow && !floatingWindow.isDestroyed()) {
+          floatingWindow.webContents.send('ai-processing', false);
+        }
+        if (!result) return;
+        console.log('[ShortCutAI] Selection GPT output:', result);
+        if (process.platform === 'darwin' && previousApp) {
+          await activateAppMac(previousApp);
+          await sleep(150);
+        }
+        showResultDialog(result);
+        // Do not set clipboard or paste here
+      } catch (err) {
+        console.error('Selection Hotkey flow error:', err);
+        if (floatingWindow && !floatingWindow.isDestroyed()) {
+          floatingWindow.webContents.send('ai-processing', false);
+        }
       }
-      if (!selectedText || selectedText.trim() === '') return;
-
-      console.log('[ShortCutAI] Copied text:', selectedText);
-
-      // Show loading state on floating window
-      if (floatingWindow && !floatingWindow.isDestroyed()) {
-        floatingWindow.webContents.send('ai-processing', true);
-      }
-
-      // Send to GPT
-      const promptText = `${profile.prompt}\n\n${selectedText}`;
-      const result = await callGptWithPrompt(promptText);
-      
-      // Hide loading state
-      if (floatingWindow && !floatingWindow.isDestroyed()) {
-        floatingWindow.webContents.send('ai-processing', false);
-      }
-      
-      if (!result) return;
-
-      console.log('[ShortCutAI] GPT output:', result);
-
-      // Restore focus to previous app on macOS and paste
-      if (process.platform === 'darwin' && previousApp) {
-        await activateAppMac(previousApp);
-        await sleep(150);
-      }
-      clipboard.writeText(result);
-      await new Promise(r => setTimeout(r, 150));
-      if (process.platform === 'darwin' || process.platform === 'win32') {
-        sendKeys('^v');
-      }
-    } catch (err) {
-      console.error('Hotkey flow error:', err);
-      // Make sure to hide loading state on error
-      if (floatingWindow && !floatingWindow.isDestroyed()) {
-        floatingWindow.webContents.send('ai-processing', false);
-      }
-    }
-  });
-  if (ok) currentHotkey = accelerator;
+    });
+    if (ok) currentSelectionHotkey = accelerator;
+  }
 }
 
 function showSelectorOverlay(profiles) {
@@ -427,6 +500,73 @@ function showSelectorOverlay(profiles) {
       }, 150);
     });
   });
+}
+
+function showResultDialog(resultText) {
+  const { screen, BrowserWindow } = require('electron');
+  const cursor = screen.getCursorScreenPoint();
+  const lines = resultText.split('\n').length;
+  const charsPerLine = Math.max(...resultText.split('\n').map(l => l.length));
+  const width = Math.min(900, Math.max(320, charsPerLine * 12 + 50));
+  const height = Math.min(600, Math.max(120, lines * 32 + 70));
+
+  // Central single-layer dialog on completely transparent background
+  const html = `<!DOCTYPE html><html><head><meta charset='utf-8'>
+    <title>AI Result</title>
+    <style>
+      html, body { height: 100%; margin: 0; padding: 0; background: transparent !important; }
+      body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: transparent !important; }
+      .dialog {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 2px 24px 0 rgba(60,60,92,0.14);
+        padding: 12px 12px 12px 12px;
+        min-width: 220px;
+        max-width: 700px;
+        max-height: 500px;
+        font-family: system-ui,sans-serif;
+        color: #222;
+        box-sizing: border-box;
+        overflow: auto;
+      }
+      .result {
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 13px;
+        line-height: 1.6;
+        padding-bottom: 0;
+        user-select: text;
+        font-weight: 400;
+      }
+    </style>
+  </head><body tabindex='1'>
+    <div class='dialog'>
+      <div class='result'>${resultText.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    </div>
+    <script>document.body.focus();document.body.onkeydown=e=>{if(e.key==='Escape'){window.close();}};document.body.onclick=()=>window.close();</script>
+  </body></html>`;
+
+  const win = new BrowserWindow({
+    width, height,
+    x: cursor.x - Math.floor(width / 2),
+    y: cursor.y + 48,
+    resizable: true,
+    alwaysOnTop: true,
+    minimizable: false,
+    maximizable: false,
+    frame: false,
+    skipTaskbar: true,
+    transparent: true, // Keep OS background transparent, dialog only white layer
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+    },
+  });
+  win.loadURL('data:text/html;charset=UTF-8,' + encodeURIComponent(html));
+  win.once('ready-to-show', () => win.show());
+  win.on('blur', () => { try { win.close(); } catch {} });
 }
 
 function createTray() {
@@ -684,6 +824,15 @@ ipcMain.handle('save-inputfield-config', (event, config) => {
   saveInputFieldConfig(enforceProfileLimit(config));
   // Re-register global hotkey if changed
   registerGlobalHotkey();
+  return { success: true };
+});
+
+ipcMain.handle('get-selection-config', () => {
+  return loadSelectionConfig();
+});
+
+ipcMain.handle('save-selection-config', (event, config) => {
+  saveSelectionConfig(enforceProfileLimit(config));
   return { success: true };
 });
 
