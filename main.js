@@ -1,8 +1,9 @@
-const { app, BrowserWindow, Menu, ipcMain, globalShortcut, clipboard, screen, Tray, nativeImage } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, globalShortcut, clipboard, screen, Tray, nativeImage, systemPreferences, shell, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 let OpenAI;
+const AutoLaunch = require('electron-auto-launch');
 
 const configPath = path.join(app.getPath('userData'), 'config.json');
 const inputFieldConfigPath = path.join(app.getPath('userData'), 'inputfield-config.json');
@@ -29,11 +30,34 @@ function saveConfig(config) {
   }
 }
 
+let appAutoLauncher;
+
+function getAutoLauncher() {
+  if (appAutoLauncher) return appAutoLauncher;
+  try {
+    appAutoLauncher = new AutoLaunch({
+      name: 'ShortCutAI',
+      isHidden: true,
+    });
+  } catch (e) {
+    console.error('Failed to init AutoLaunch:', e);
+  }
+  return appAutoLauncher;
+}
+
 // Configure OS login item so the correct app starts on boot
 function configureAutoStart(config) {
   try {
     const wantAutoStart = !!config?.autoStart;
-    app.setLoginItemSettings({ openAtLogin: wantAutoStart });
+    const launcher = getAutoLauncher();
+    if (!launcher) return;
+    launcher.isEnabled().then((enabled) => {
+      if (wantAutoStart && !enabled) {
+        launcher.enable().catch((e) => console.error('AutoLaunch enable error:', e));
+      } else if (!wantAutoStart && enabled) {
+        launcher.disable().catch((e) => console.error('AutoLaunch disable error:', e));
+      }
+    }).catch((e) => console.error('AutoLaunch isEnabled error:', e));
   } catch (e) {
     console.error('configureAutoStart error:', e);
   }
@@ -765,6 +789,34 @@ function createWindow() {
   });
 }
 
+function ensureMacAccessibility() {
+  try {
+    if (process.platform !== 'darwin') return;
+    const trusted = systemPreferences.isTrustedAccessibilityClient(false);
+    if (trusted) return;
+    // Prompt the OS to show the Accessibility dialog
+    try { systemPreferences.isTrustedAccessibilityClient(true); } catch {}
+    // Provide helpful instructions and deep link to the correct pane
+    try {
+      dialog.showMessageBox({
+        type: 'info',
+        buttons: ['Open System Settings', 'Later'],
+        defaultId: 0,
+        cancelId: 1,
+        title: 'Enable Accessibility for ShortCutAI',
+        message: 'ShortCutAI needs Accessibility permission to read selections and paste results.',
+        detail: 'Go to System Settings → Privacy & Security → Accessibility and enable ShortCutAI.',
+      }).then((res) => {
+        if (res.response === 0) {
+          try { shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'); } catch {}
+        }
+      }).catch(() => {});
+    } catch {}
+  } catch (e) {
+    console.error('ensureMacAccessibility error:', e);
+  }
+}
+
 function createSettingsWindow() {
   if (settingsWindow) {
     settingsWindow.focus();
@@ -866,6 +918,7 @@ ipcMain.handle('show-main-window', () => {
 
 app.whenReady().then(() => {
   createWindow();
+  ensureMacAccessibility();
   registerGlobalHotkey();
   createTray();
   // Ensure login item points to the correct executable after installs/updates
