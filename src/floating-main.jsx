@@ -4,17 +4,6 @@ import ReactDOM from 'react-dom/client';
 function FloatingButton() {
   const [isHovered, setIsHovered] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
-  const [isDragging, setIsDragging] = React.useState(false);
-  const dragStateRef = React.useRef({
-    dragging: false,
-    pointerId: null,
-    offsetX: 0,
-    offsetY: 0,
-    startX: 0,
-    startY: 0,
-    moved: false,
-  });
-  const draggedRef = React.useRef(false);
 
   React.useEffect(() => {
     window.api.onAIProcessing((processing) => {
@@ -22,97 +11,14 @@ function FloatingButton() {
     });
   }, []);
 
-  const handlePointerMove = React.useCallback((event) => {
-    const state = dragStateRef.current;
-    if (!state.dragging || event.pointerId !== state.pointerId) return;
-
-    const deltaX = event.screenX - state.startX;
-    const deltaY = event.screenY - state.startY;
-    if (!state.moved && (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2)) {
-      state.moved = true;
-      draggedRef.current = true;
-    }
-
-    if (!window.api || typeof window.api.moveFloatingWindow !== 'function') {
-      return;
-    }
-
-    const targetX = event.screenX - state.offsetX;
-    const targetY = event.screenY - state.offsetY;
-    window.api.moveFloatingWindow({ x: targetX, y: targetY });
-  }, []);
-
-  const handlePointerUp = React.useCallback((event) => {
-    const state = dragStateRef.current;
-    if (!state.dragging || (event && event.pointerId !== state.pointerId)) return;
-
-    try {
-      event?.target?.releasePointerCapture?.(state.pointerId);
-    } catch {}
-
-    state.dragging = false;
-    state.pointerId = null;
-    state.offsetX = 0;
-    state.offsetY = 0;
-    state.startX = 0;
-    state.startY = 0;
-    state.moved = false;
-    setIsDragging(false);
-
-    window.removeEventListener('pointermove', handlePointerMove);
-    window.removeEventListener('pointerup', handlePointerUp);
-    window.removeEventListener('pointercancel', handlePointerUp);
-  }, [handlePointerMove]);
-
-  const handlePointerDown = React.useCallback((event) => {
-    if (event.button !== 0) return;
-    if (!window.api || typeof window.api.moveFloatingWindow !== 'function') return;
-
-    const state = dragStateRef.current;
-    draggedRef.current = false;
-    state.dragging = true;
-    state.pointerId = event.pointerId;
-    state.offsetX = event.screenX - window.screenX;
-    state.offsetY = event.screenY - window.screenY;
-    state.startX = event.screenX;
-    state.startY = event.screenY;
-    state.moved = false;
-
-    setIsDragging(true);
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-    window.addEventListener('pointercancel', handlePointerUp);
-
-    try {
-      event.currentTarget.setPointerCapture?.(event.pointerId);
-    } catch {}
-
-    event.preventDefault();
-  }, [handlePointerMove, handlePointerUp]);
-
-  React.useEffect(() => {
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-      window.removeEventListener('pointercancel', handlePointerUp);
-    };
-  }, [handlePointerMove, handlePointerUp]);
-
-  const handleClick = () => {
-    if (draggedRef.current) {
-      draggedRef.current = false;
-      return;
-    }
-
+  const handleClick = React.useCallback(() => {
     if (!isProcessing) {
-      window.api.showMainWindow();
+      window.api?.showMainWindow?.();
     }
-  };
+  }, [isProcessing]);
 
   return (
     <div
-      onPointerDown={handlePointerDown}
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -128,7 +34,7 @@ function FloatingButton() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        cursor: isProcessing ? (isDragging ? 'grabbing' : 'wait') : (isDragging ? 'grabbing' : 'grab'),
+        cursor: isProcessing ? 'wait' : 'pointer',
         boxShadow: isProcessing
           ? '0 8px 24px rgba(255, 193, 7, 0.3), 0 0 0 1px rgba(255, 193, 7, 0.2)'
           : isHovered
@@ -138,7 +44,6 @@ function FloatingButton() {
         transform: isHovered && !isProcessing ? 'scale(1.02)' : 'scale(1)',
         animation: isProcessing ? 'pulse 1.5s ease-in-out infinite' : 'none',
         userSelect: 'none',
-        touchAction: 'none',
       }}
     >
       <style>
