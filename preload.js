@@ -14,4 +14,5 @@ contextBridge.exposeInMainWorld('api', {
   showMainWindow: () => ipcRenderer.invoke('show-main-window'),
   onAIProcessing: (callback) => ipcRenderer.on('ai-processing', (event, isProcessing) => callback(isProcessing)),
   openSettings: () => ipcRenderer.invoke('open-settings-window'),
+  moveFloatingWindow: (position) => ipcRenderer.send('move-floating-window', position),
 });

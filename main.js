@@ -916,6 +916,28 @@ ipcMain.handle('show-main-window', () => {
   return { success: true };
 });
 
+ipcMain.on('move-floating-window', (_event, coords) => {
+  try {
+    if (!floatingWindow || floatingWindow.isDestroyed()) return;
+    if (!coords || typeof coords.x !== 'number' || typeof coords.y !== 'number') return;
+    const { width, height } = floatingWindow.getBounds();
+    let targetX = Math.round(coords.x);
+    let targetY = Math.round(coords.y);
+    try {
+      const centerPoint = { x: targetX + Math.floor(width / 2), y: targetY + Math.floor(height / 2) };
+      const display = screen.getDisplayNearestPoint(centerPoint);
+      if (display && display.workArea) {
+        const { x: dx, y: dy, width: dw, height: dh } = display.workArea;
+        targetX = Math.min(Math.max(targetX, dx), dx + dw - width);
+        targetY = Math.min(Math.max(targetY, dy), dy + dh - height);
+      }
+    } catch {}
+    floatingWindow.setPosition(targetX, targetY);
+  } catch (e) {
+    console.error('move-floating-window error:', e);
+  }
+});
+
 app.whenReady().then(() => {
   createWindow();
   ensureMacAccessibility();
