@@ -488,10 +488,28 @@ function showSelectorOverlay(profiles) {
     const width = 260;
     const height = Math.min(9, profiles.length || 1) * 38 + 16;
     const token = `sel_${Date.now()}`;
+    const display = screen.getDisplayNearestPoint(cursor);
+    const workArea = display?.workArea || {
+      x: display?.bounds?.x || 0,
+      y: display?.bounds?.y || 0,
+      width: display?.bounds?.width || width,
+      height: display?.bounds?.height || height,
+    };
+    const workX = workArea.x || 0;
+    const workY = workArea.y || 0;
+    const workWidth = workArea.width || width;
+    const workHeight = workArea.height || height;
     
-    // Position below cursor, centered - minimal mouse movement
-    const x = Math.max(0, cursor.x - Math.floor(width / 2));
-    const y = cursor.y + 24; // 24px below cursor
+    let x = cursor.x - Math.floor(width / 2);
+    x = Math.max(workX, Math.min(x, workX + workWidth - width));
+    
+    let y = cursor.y - Math.floor(height / 2);
+    if (y < workY) {
+      y = workY;
+    }
+    if (y + height > workY + workHeight) {
+      y = Math.max(workY, workY + workHeight - height);
+    }
 
     selectorWindow = new BrowserWindow({
       width,
@@ -599,6 +617,28 @@ function showResultDialog(resultText) {
   const charsPerLine = Math.max(...resultText.split('\n').map(l => l.length));
   const width = Math.min(900, Math.max(320, charsPerLine * 12 + 50));
   const height = Math.min(600, Math.max(120, lines * 32 + 70));
+  const display = screen.getDisplayNearestPoint(cursor);
+  const workArea = display?.workArea || {
+    x: display?.bounds?.x || 0,
+    y: display?.bounds?.y || 0,
+    width: display?.bounds?.width || width,
+    height: display?.bounds?.height || height,
+  };
+  const workX = workArea.x || 0;
+  const workY = workArea.y || 0;
+  const workWidth = workArea.width || width;
+  const workHeight = workArea.height || height;
+
+  let x = cursor.x - Math.floor(width / 2);
+  x = Math.max(workX, Math.min(x, workX + workWidth - width));
+
+  let y = cursor.y - Math.floor(height / 2);
+  if (y < workY) {
+    y = workY;
+  }
+  if (y + height > workY + workHeight) {
+    y = Math.max(workY, workY + workHeight - height);
+  }
 
   // Central single-layer dialog on completely transparent background
   const html = `<!DOCTYPE html><html><head><meta charset='utf-8'>
@@ -638,8 +678,8 @@ function showResultDialog(resultText) {
 
   const win = new BrowserWindow({
     width, height,
-    x: cursor.x - Math.floor(width / 2),
-    y: cursor.y + 48,
+    x,
+    y,
     resizable: true,
     alwaysOnTop: true,
     minimizable: false,

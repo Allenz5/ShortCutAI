@@ -207,7 +207,7 @@ function FloatingButton() {
           height: 56,
           borderRadius: '50%',
           background: isProcessing
-            ? 'linear-gradient(135deg, #FFD93D 0%, #FFC107 100%)'
+            ? 'linear-gradient(135deg, rgba(255, 217, 61, 0.55) 0%, rgba(255, 193, 7, 0.45) 100%)'
             : isHovered 
               ? 'linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%)'
               : 'linear-gradient(135deg, #FFFFFF 0%, #FAFAFA 100%)',
