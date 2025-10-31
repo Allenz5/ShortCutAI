@@ -9,8 +9,33 @@ const configPath = path.join(app.getPath('userData'), 'config.json');
 const inputFieldConfigPath = path.join(app.getPath('userData'), 'inputfield-config.json');
 const selectionConfigPath = path.join(app.getPath('userData'), 'selection-config.json');
 
+const startedHidden = determineHiddenStartup();
+
 const APP_ICON_RELATIVE_PATH = path.join('assets', 'floating', 'nerd.png');
 let cachedAppIconPath;
+
+function determineHiddenStartup() {
+  try {
+    if (process.platform === 'darwin') {
+      const loginSettings = app.getLoginItemSettings();
+      if (loginSettings?.wasOpenedAtLogin || loginSettings?.wasOpenedAsHidden) {
+        return true;
+      }
+    } else if (process.platform === 'win32') {
+      const argMatches = process.argv.some((arg) => {
+        if (!arg) return false;
+        const lower = String(arg).toLowerCase();
+        return lower === '--hidden' || lower.includes('--hidden');
+      });
+      if (argMatches) return true;
+      try {
+        const loginSettings = app.getLoginItemSettings?.();
+        if (loginSettings?.wasOpenedAtLogin) return true;
+      } catch {}
+    }
+  } catch {}
+  return false;
+}
 
 function resolveAppIconPath() {
   if (cachedAppIconPath !== undefined) return cachedAppIconPath;
@@ -675,10 +700,6 @@ function createTray() {
       mainWindow.show();
       if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
       mainWindow.focus();
-      // Hide floating window when main window is shown
-      if (floatingWindow && !floatingWindow.isDestroyed()) {
-        floatingWindow.hide();
-      }
     }
   });
 }
@@ -780,6 +801,7 @@ function createWindow() {
     height: 720,
     minWidth: 880,
     minHeight: 680,
+    show: !startedHidden,
     icon: getAppIconPath() || undefined,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -789,6 +811,18 @@ function createWindow() {
   });
 
   centerWindow(mainWindow, 1024, 680);
+
+  if (startedHidden) {
+    mainWindow.once('ready-to-show', () => {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      if (process.platform === 'win32') {
+        try { mainWindow.setSkipTaskbar(true); } catch {}
+      }
+      if (process.platform === 'darwin') {
+        try { app.dock.hide(); } catch {}
+      }
+    });
+  }
 
   // Load from Vite dev server in development, or from built files in production
   if (process.env.NODE_ENV === 'development') {
@@ -938,11 +972,6 @@ ipcMain.handle('show-main-window', () => {
     mainWindow.show();
     if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
     mainWindow.focus();
-    
-    // Hide floating window when main window is shown
-    if (floatingWindow && !floatingWindow.isDestroyed()) {
-      floatingWindow.hide();
-    }
   }
   return { success: true };
 });
@@ -957,21 +986,19 @@ app.whenReady().then(() => {
     }
   } catch {}
   createWindow();
+  createFloatingWindow();
   ensureMacAccessibility();
   registerGlobalHotkey();
   createTray();
   // Ensure login item points to the correct executable after installs/updates
   try { configureAutoStart(loadConfig()); } catch {}
   try {
-    if (app.isPackaged && process.platform === 'darwin') {
+    if (!startedHidden && app.isPackaged && process.platform === 'darwin') {
       const st = app.getLoginItemSettings();
-      if (st?.openAtLogin) {
-        // Make sure the main window is visible on login
-        if (mainWindow) {
-          try { app.dock.show(); } catch {}
-          mainWindow.show();
-          mainWindow.focus();
-        }
+      if (st?.openAtLogin && mainWindow) {
+        try { app.dock.show(); } catch {}
+        mainWindow.show();
+        mainWindow.focus();
       }
     }
   } catch {}
@@ -985,9 +1012,6 @@ app.whenReady().then(() => {
       mainWindow.show();
       if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
       mainWindow.focus();
-      if (floatingWindow && !floatingWindow.isDestroyed()) {
-        floatingWindow.hide();
-      }
     }
   });
 });
