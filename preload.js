@@ -18,5 +18,7 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('ai-processing', listener);
     return () => ipcRenderer.removeListener('ai-processing', listener);
   },
+  getFloatingWindowBounds: () => ipcRenderer.invoke('floating-window-get-bounds'),
+  moveFloatingWindow: (position) => ipcRenderer.send('floating-window-move', position),
   openSettings: () => ipcRenderer.invoke('open-settings-window'),
 });

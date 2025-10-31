@@ -976,6 +976,27 @@ ipcMain.handle('show-main-window', () => {
   return { success: true };
 });
 
+ipcMain.handle('floating-window-get-bounds', () => {
+  try {
+    if (!floatingWindow || floatingWindow.isDestroyed()) return null;
+    const { x, y } = floatingWindow.getBounds();
+    return { x, y };
+  } catch {
+    return null;
+  }
+});
+
+ipcMain.on('floating-window-move', (_event, position) => {
+  try {
+    if (!floatingWindow || floatingWindow.isDestroyed()) return;
+    const { x, y } = position || {};
+    if (typeof x !== 'number' || typeof y !== 'number' || !Number.isFinite(x) || !Number.isFinite(y)) return;
+    floatingWindow.setPosition(Math.round(x), Math.round(y));
+  } catch (err) {
+    console.error('Failed to move floating window:', err);
+  }
+});
+
 app.whenReady().then(() => {
   try {
     if (process.platform === 'darwin') {
