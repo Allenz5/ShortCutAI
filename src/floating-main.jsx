@@ -44,6 +44,7 @@ function FloatingButton() {
         transform: isHovered && !isProcessing ? 'scale(1.02)' : 'scale(1)',
         animation: isProcessing ? 'pulse 1.5s ease-in-out infinite' : 'none',
         userSelect: 'none',
+        WebkitAppRegion: 'no-drag',
       }}
     >
       <style>
