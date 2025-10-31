@@ -9,6 +9,47 @@ const configPath = path.join(app.getPath('userData'), 'config.json');
 const inputFieldConfigPath = path.join(app.getPath('userData'), 'inputfield-config.json');
 const selectionConfigPath = path.join(app.getPath('userData'), 'selection-config.json');
 
+const APP_ICON_RELATIVE_PATH = path.join('assets', 'floating', 'nerd.png');
+let cachedAppIconPath;
+
+function resolveAppIconPath() {
+  if (cachedAppIconPath !== undefined) return cachedAppIconPath;
+  const candidates = [
+    path.join(__dirname, 'public', APP_ICON_RELATIVE_PATH),
+    path.join(__dirname, 'dist', APP_ICON_RELATIVE_PATH),
+    path.join(process.resourcesPath || '', APP_ICON_RELATIVE_PATH),
+    path.join(process.resourcesPath || '', 'app.asar.unpacked', APP_ICON_RELATIVE_PATH),
+  ];
+  for (const candidate of candidates) {
+    try {
+      if (candidate && fs.existsSync(candidate)) {
+        cachedAppIconPath = candidate;
+        return cachedAppIconPath;
+      }
+    } catch {
+      // Ignore missing paths and continue searching
+    }
+  }
+  cachedAppIconPath = null;
+  return cachedAppIconPath;
+}
+
+function getAppIconPath() {
+  return resolveAppIconPath();
+}
+
+function getAppIconImage() {
+  const iconPath = resolveAppIconPath();
+  if (!iconPath) return nativeImage.createEmpty();
+  try {
+    const image = nativeImage.createFromPath(iconPath);
+    if (!image || image.isEmpty()) return nativeImage.createEmpty();
+    return image;
+  } catch {
+    return nativeImage.createEmpty();
+  }
+}
+
 // Load or initialize config
 function loadConfig() {
   try {
@@ -325,12 +366,12 @@ function registerGlobalHotkey() {
         if (!selectedText || selectedText.trim() === '') return;
         console.log('[ShortCutAI] Copied text:', selectedText);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
-          floatingWindow.webContents.send('ai-processing', true);
+          floatingWindow.webContents.send('ai-processing', 'input');
         }
         const promptText = `${profile.prompt}\n\n${selectedText}`;
         const result = await callGptWithPrompt(promptText);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
-          floatingWindow.webContents.send('ai-processing', false);
+          floatingWindow.webContents.send('ai-processing', 'idle');
         }
         if (!result) return;
         console.log('[ShortCutAI] GPT output:', result);
@@ -346,7 +387,7 @@ function registerGlobalHotkey() {
       } catch (err) {
         console.error('Hotkey flow error:', err);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
-          floatingWindow.webContents.send('ai-processing', false);
+          floatingWindow.webContents.send('ai-processing', 'idle');
         }
       }
     });
@@ -378,12 +419,12 @@ function registerGlobalHotkey() {
         if (!selectedText || selectedText.trim() === '') return;
         console.log('[ShortCutAI] Selection Copied text:', selectedText);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
-          floatingWindow.webContents.send('ai-processing', true);
+          floatingWindow.webContents.send('ai-processing', 'selection');
         }
         const promptText = `${profile.prompt}\n\n${selectedText}`;
         const result = await callGptWithPrompt(promptText);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
-          floatingWindow.webContents.send('ai-processing', false);
+          floatingWindow.webContents.send('ai-processing', 'idle');
         }
         if (!result) return;
         console.log('[ShortCutAI] Selection GPT output:', result);
@@ -396,7 +437,7 @@ function registerGlobalHotkey() {
       } catch (err) {
         console.error('Selection Hotkey flow error:', err);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
-          floatingWindow.webContents.send('ai-processing', false);
+          floatingWindow.webContents.send('ai-processing', 'idle');
         }
       }
     });
@@ -595,20 +636,8 @@ function showResultDialog(resultText) {
 
 function createTray() {
   if (tray) return;
-  let icon;
-  try {
-    const iconTemplatePath = path.join(__dirname, 'iconTemplate.png');
-    const iconPath = path.join(__dirname, 'icon.png');
-    if (process.platform === 'darwin' && fs.existsSync(iconTemplatePath)) {
-      icon = nativeImage.createFromPath(iconTemplatePath);
-      try { icon.setTemplateImage(true); } catch {}
-    } else if (fs.existsSync(iconPath)) {
-      icon = nativeImage.createFromPath(iconPath);
-      if (process.platform === 'darwin') { try { icon.setTemplateImage(true); } catch {} }
-    } else {
-      icon = nativeImage.createEmpty();
-    }
-  } catch {
+  let icon = getAppIconImage();
+  if (!icon || icon.isEmpty()) {
     icon = nativeImage.createEmpty();
   }
 
@@ -751,6 +780,7 @@ function createWindow() {
     height: 720,
     minWidth: 880,
     minHeight: 680,
+    icon: getAppIconPath() || undefined,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -831,6 +861,7 @@ function createSettingsWindow() {
     maxWidth: 600,
     resizable: false,
     title: 'Settings',
+    icon: getAppIconPath() || undefined,
     autoHideMenuBar: true,
     parent: mainWindow,  // Add this line
     modal: false,        // Add this line
@@ -917,6 +948,14 @@ ipcMain.handle('show-main-window', () => {
 });
 
 app.whenReady().then(() => {
+  try {
+    if (process.platform === 'darwin') {
+      const iconImage = getAppIconImage();
+      if (iconImage && !iconImage.isEmpty()) {
+        app.dock.setIcon(iconImage);
+      }
+    }
+  } catch {}
   createWindow();
   ensureMacAccessibility();
   registerGlobalHotkey();

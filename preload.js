@@ -12,6 +12,11 @@ contextBridge.exposeInMainWorld('api', {
   onSelectorData: (callback) => ipcRenderer.on('selector-data', (_e, payload) => callback(payload)),
   chooseSelectorIndex: (token, index) => ipcRenderer.send(`selector-chosen:${token}`, index),
   showMainWindow: () => ipcRenderer.invoke('show-main-window'),
-  onAIProcessing: (callback) => ipcRenderer.on('ai-processing', (event, isProcessing) => callback(isProcessing)),
+  onAIProcessing: (callback) => {
+    if (typeof callback !== 'function') return () => {};
+    const listener = (_event, status) => callback(status);
+    ipcRenderer.on('ai-processing', listener);
+    return () => ipcRenderer.removeListener('ai-processing', listener);
+  },
   openSettings: () => ipcRenderer.invoke('open-settings-window'),
 });

@@ -1,21 +1,57 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
+const PROCESSING_STATUSES = new Set(['input', 'selection']);
+
 function FloatingButton() {
   const [isHovered, setIsHovered] = React.useState(false);
-  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [status, setStatus] = React.useState('idle');
+  const assetSources = React.useMemo(() => {
+    const resolve = (relativePath) => {
+      if (typeof window === 'undefined') return relativePath;
+      try {
+        return new URL(relativePath, window.location.href).toString();
+      } catch {
+        return relativePath;
+      }
+    };
+    return {
+      idle: resolve('./assets/floating/nerd.png'),
+      input: resolve('./assets/floating/thinking1.png'),
+      selection: resolve('./assets/floating/thinking2.png'),
+    };
+  }, []);
 
   React.useEffect(() => {
-    window.api.onAIProcessing((processing) => {
-      setIsProcessing(processing);
+    const unsubscribe = window.api?.onAIProcessing?.((nextStatus) => {
+      if (typeof nextStatus === 'string') {
+        setStatus(nextStatus);
+      } else {
+        setStatus(nextStatus ? 'input' : 'idle');
+      }
     });
+    return unsubscribe;
   }, []);
+
+  const isProcessing = PROCESSING_STATUSES.has(status);
 
   const handleClick = React.useCallback(() => {
     if (!isProcessing) {
       window.api?.showMainWindow?.();
     }
   }, [isProcessing]);
+  const imageSrc =
+    status === 'selection'
+      ? assetSources.selection
+      : status === 'input'
+        ? assetSources.input
+        : assetSources.idle;
+  const imageAlt =
+    status === 'selection'
+      ? 'AI processing selection'
+      : status === 'input'
+        ? 'AI processing input'
+        : 'AI ready';
 
   return (
     <div
@@ -59,76 +95,16 @@ function FloatingButton() {
         `}
       </style>
       
-      {isProcessing ? (
-        // Thinking face
-        <svg
-          width="32"
-          height="32"
-          viewBox="0 0 32 32"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Face circle */}
-          <circle
-            cx="16"
-            cy="16"
-            r="13"
-            fill="none"
-            stroke="#000000"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          {/* Left eye - focused/thinking */}
-          <circle cx="12" cy="13" r="1.5" fill="#000000" />
-          {/* Right eye - focused/thinking */}
-          <circle cx="20" cy="13" r="1.5" fill="#000000" />
-          {/* Thinking mouth - straight line */}
-          <line
-            x1="11"
-            y1="20"
-            x2="21"
-            y2="20"
-            stroke="#000000"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          {/* Thought bubbles */}
-          <circle cx="25" cy="8" r="1.5" fill="#000000" opacity="0.6" />
-          <circle cx="27" cy="5" r="1" fill="#000000" opacity="0.4" />
-        </svg>
-      ) : (
-        // Smiley face
-        <svg
-          width="32"
-          height="32"
-          viewBox="0 0 32 32"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Face circle */}
-          <circle
-            cx="16"
-            cy="16"
-            r="13"
-            fill="none"
-            stroke="#000000"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          {/* Left eye */}
-          <circle cx="12" cy="13" r="1.5" fill="#000000" />
-          {/* Right eye */}
-          <circle cx="20" cy="13" r="1.5" fill="#000000" />
-          {/* Smile */}
-          <path
-            d="M 11 19 Q 16 23 21 19"
-            stroke="#000000"
-            strokeWidth="2"
-            strokeLinecap="round"
-            fill="none"
-          />
-        </svg>
-      )}
+      <img
+        src={imageSrc}
+        alt={imageAlt}
+        style={{
+          width: 32,
+          height: 32,
+          objectFit: 'contain',
+        }}
+        draggable={false}
+      />
     </div>
   );
 }

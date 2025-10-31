@@ -35,6 +35,15 @@
       "preload.js",
       "package.json"
     ],
+    "mac": {
+      "icon": "public/assets/floating/nerd.png"
+    },
+    "win": {
+      "icon": "public/assets/floating/nerd.png"
+    },
+    "linux": {
+      "icon": "public/assets/floating/nerd.png"
+    },
     "directories": {
       "output": "release"
     }
