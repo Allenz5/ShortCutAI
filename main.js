@@ -1058,6 +1058,14 @@ app.whenReady().then(() => {
   createTray();
   // Ensure login item points to the correct executable after installs/updates
   try { configureAutoStart(loadConfig()); } catch {}
+  // If no OpenAI API key is configured, prompt user to open Settings on startup
+  try {
+    const cfg = loadConfig();
+    const apiKey = (cfg && typeof cfg.apiKey === 'string') ? cfg.apiKey.trim() : '';
+    if (!apiKey) {
+      createSettingsWindow();
+    }
+  } catch {}
   try {
     if (!startedHidden && app.isPackaged && process.platform === 'darwin') {
       const st = app.getLoginItemSettings();
