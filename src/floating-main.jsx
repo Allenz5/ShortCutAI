@@ -207,7 +207,7 @@ function FloatingButton() {
           height: 56,
           borderRadius: '50%',
           background: isProcessing
-            ? 'linear-gradient(135deg, rgba(255, 217, 61, 0.55) 0%, rgba(255, 193, 7, 0.45) 100%)'
+            ? 'linear-gradient(135deg, #FFE680 0%, #FFD24D 100%)'
             : isHovered 
               ? 'linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%)'
               : 'linear-gradient(135deg, #FFFFFF 0%, #FAFAFA 100%)',
@@ -216,10 +216,10 @@ function FloatingButton() {
           justifyContent: 'center',
           cursor: isProcessing ? 'wait' : 'pointer',
           boxShadow: isProcessing
-            ? '0 8px 24px rgba(255, 193, 7, 0.3), 0 0 0 1px rgba(255, 193, 7, 0.2)'
+            ? '0 4px 14px rgba(255, 193, 7, 0.22), 0 0 0 1px rgba(255, 193, 7, 0.18)'
             : isHovered
-              ? '0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.08)'
-              : '0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06)',
+              ? '0 4px 14px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(0, 0, 0, 0.06)'
+              : '0 3px 10px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)',
           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
           transform: isHovered && !isProcessing ? 'scale(1.02)' : 'scale(1)',
           animation: isProcessing ? 'pulse 1.5s ease-in-out infinite' : 'none',

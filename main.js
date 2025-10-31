@@ -776,6 +776,11 @@ function createFloatingWindow() {
 
   // Ensure always on top with highest level
   floatingWindow.setAlwaysOnTop(true, 'screen-saver');
+  try {
+    floatingWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  } catch (err) {
+    console.warn('setVisibleOnAllWorkspaces unsupported:', err?.message || err);
+  }
 
   // Right-click (context menu) with only Quit
   const buildFloatingContextMenu = () => Menu.buildFromTemplate([
