@@ -183,7 +183,10 @@ function InputField() {
       <div className="left-panel">
         <button
           className={`config-btn ${isInputField ? 'active' : ''}`}
-          onClick={() => setActiveSection('inputfield')}
+          onClick={() => {
+            setActiveSection('inputfield');
+            setSelectedProfileId(null); // Always show InputField general config when switching
+          }}
         >
           <span className="icon" aria-hidden>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -195,7 +198,10 @@ function InputField() {
         </button>
         <button
           className={`config-btn ${!isInputField ? 'active' : ''}`}
-          onClick={() => setActiveSection('selection')}
+          onClick={() => {
+            setActiveSection('selection');
+            selection.setSelectedProfileId(null); // Always show Selection general config when switching
+          }}
         >
           <span className="icon" aria-hidden>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
