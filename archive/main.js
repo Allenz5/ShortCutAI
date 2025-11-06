@@ -114,12 +114,21 @@ function getAutoLauncher() {
 // Configure OS login item so the correct app starts on boot
 function configureAutoStart(config) {
   try {
+    if (!app.isPackaged) {
+      return;
+    }
     const wantAutoStart = !!config?.autoStart;
     const launcher = getAutoLauncher();
     if (!launcher) return;
     launcher.isEnabled().then((enabled) => {
       if (wantAutoStart && !enabled) {
         launcher.enable().catch((e) => console.error('AutoLaunch enable error:', e));
+      } else if (wantAutoStart && enabled) {
+        launcher.disable()
+          .catch((e) => console.error('AutoLaunch disable (refresh) error:', e))
+          .finally(() => {
+            launcher.enable().catch((e) => console.error('AutoLaunch re-enable error:', e));
+          });
       } else if (!wantAutoStart && enabled) {
         launcher.disable().catch((e) => console.error('AutoLaunch disable error:', e));
       }
