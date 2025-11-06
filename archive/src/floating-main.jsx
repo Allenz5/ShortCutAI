@@ -8,6 +8,13 @@ function FloatingButton() {
   const [status, setStatus] = React.useState('idle');
   const dragStateRef = React.useRef(null);
   const processingRef = React.useRef(false);
+  const pointerActiveRef = React.useRef(false);
+  const hoverRef = React.useRef(false);
+  const updateMouseInteractivity = React.useCallback((shouldIgnore = false) => {
+    try {
+      window.api?.setFloatingWindowIgnoreMouse?.(Boolean(shouldIgnore));
+    } catch {}
+  }, []);
   const pointerScreenPosition = React.useCallback((evt) => {
     if (!evt) return { x: 0, y: 0 };
     if (typeof evt.screenX === 'number' && typeof evt.screenY === 'number') {
@@ -57,6 +64,13 @@ function FloatingButton() {
     processingRef.current = isProcessing;
   }, [isProcessing]);
 
+  React.useEffect(() => {
+    updateMouseInteractivity(true);
+    return () => {
+      updateMouseInteractivity(false);
+    };
+  }, [updateMouseInteractivity]);
+
   const scheduleMoveFrame = React.useCallback(() => {
     const state = dragStateRef.current;
     if (!state) return;
@@ -75,8 +89,24 @@ function FloatingButton() {
     });
   }, []);
 
+  const handlePointerEnter = React.useCallback(() => {
+    hoverRef.current = true;
+    setIsHovered(true);
+    updateMouseInteractivity(false);
+  }, [setIsHovered, updateMouseInteractivity]);
+
+  const handlePointerLeave = React.useCallback(() => {
+    hoverRef.current = false;
+    setIsHovered(false);
+    if (!pointerActiveRef.current) {
+      updateMouseInteractivity(true);
+    }
+  }, [setIsHovered, updateMouseInteractivity]);
+
   const handlePointerDown = React.useCallback((event) => {
     if (event.button != null && event.button !== 0) return;
+    pointerActiveRef.current = true;
+    updateMouseInteractivity(false);
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
     } catch {}
@@ -111,7 +141,7 @@ function FloatingButton() {
       if (!current || current.pointerId !== state.pointerId) return;
       current.ready = true;
     });
-  }, [pointerScreenPosition]);
+  }, [pointerScreenPosition, updateMouseInteractivity]);
 
   const handlePointerMove = React.useCallback((event) => {
     const state = dragStateRef.current;
@@ -158,12 +188,24 @@ function FloatingButton() {
       event.currentTarget.releasePointerCapture(event.pointerId);
     } catch {}
     finalizeMove();
+    pointerActiveRef.current = false;
     const moved = state.moved;
     dragStateRef.current = null;
-    if (!moved && !processingRef.current) {
+    const rect = event.currentTarget?.getBoundingClientRect?.();
+    const clientX = typeof event.clientX === 'number' ? event.clientX : 0;
+    const clientY = typeof event.clientY === 'number' ? event.clientY : 0;
+    const pointerInside = rect
+      ? clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
+      : false;
+    if (!pointerInside) {
+      hoverRef.current = false;
+      setIsHovered(false);
+      updateMouseInteractivity(true);
+    }
+    if (!moved && !processingRef.current && pointerInside) {
       window.api?.showMainWindow?.();
     }
-  }, [finalizeMove]);
+  }, [finalizeMove, setIsHovered, updateMouseInteractivity]);
 
   const handlePointerUp = React.useCallback((event) => {
     handlePointerEnd(event);
@@ -200,8 +242,8 @@ function FloatingButton() {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={handlePointerLeave}
         style={{
           width: 56,
           height: 56,

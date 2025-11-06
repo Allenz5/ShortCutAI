@@ -1042,6 +1042,19 @@ ipcMain.on('floating-window-move', (_event, position) => {
   }
 });
 
+ipcMain.on('floating-window-ignore-mouse', (_event, ignore) => {
+  try {
+    if (!floatingWindow || floatingWindow.isDestroyed()) return;
+    if (ignore) {
+      floatingWindow.setIgnoreMouseEvents(true, { forward: true });
+    } else {
+      floatingWindow.setIgnoreMouseEvents(false);
+    }
+  } catch (err) {
+    console.error('Failed to update floating window mouse event handling:', err);
+  }
+});
+
 app.whenReady().then(() => {
   try {
     if (process.platform === 'darwin') {

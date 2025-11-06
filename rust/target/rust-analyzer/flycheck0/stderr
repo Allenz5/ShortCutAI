@@ -1,0 +1,362 @@
+   0.239926300s  INFO prepare_target{force=false package_id=rust v0.1.0 (C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri) target="rust_lib"}: cargo::core::compiler::fingerprint: fingerprint error for rust v0.1.0 (C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri)/Check { test: false }/TargetInner { ..: lib_target("rust_lib", ["staticlib", "cdylib", "rlib"], "C:\\Users\\allen\\Desktop\\ShortCutAI\\rust\\src-tauri\\src\\lib.rs", Edition2021) }
+   0.239967300s  INFO prepare_target{force=false package_id=rust v0.1.0 (C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri) target="rust_lib"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri\target\debug\.fingerprint\rust-60836009daf8a636\lib-rust_lib`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   0.277491900s  INFO prepare_target{force=false package_id=tauri v2.9.2 target="tauri"}: cargo::core::compiler::fingerprint: fingerprint error for tauri v2.9.2/Check { test: false }/TargetInner { ..: lib_target("tauri", ["lib"], "C:\\Users\\allen\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\tauri-2.9.2\\src\\lib.rs", Edition2021) }
+   0.277512700s  INFO prepare_target{force=false package_id=tauri v2.9.2 target="tauri"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri\target\debug\.fingerprint\tauri-3354f1ab2a0850c3\lib-tauri`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: <unknown>
+  16: <unknown>
+  17: git_midx_writer_dump
+  18: git_filter_source_repo
+  19: git_midx_writer_dump
+  20: BaseThreadInitThunk
+  21: RtlUserThreadStart
+   0.292544900s  INFO prepare_target{force=false package_id=tauri-runtime-wry v2.9.1 target="tauri_runtime_wry"}: cargo::core::compiler::fingerprint: fingerprint error for tauri-runtime-wry v2.9.1/Check { test: false }/TargetInner { ..: lib_target("tauri_runtime_wry", ["lib"], "C:\\Users\\allen\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\tauri-runtime-wry-2.9.1\\src\\lib.rs", Edition2021) }
+   0.292565900s  INFO prepare_target{force=false package_id=tauri-runtime-wry v2.9.1 target="tauri_runtime_wry"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri\target\debug\.fingerprint\tauri-runtime-wry-d6ac28237af21a73\lib-tauri_runtime_wry`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: <unknown>
+  17: <unknown>
+  18: git_midx_writer_dump
+  19: git_filter_source_repo
+  20: git_midx_writer_dump
+  21: BaseThreadInitThunk
+  22: RtlUserThreadStart
+   0.293135300s  INFO prepare_target{force=false package_id=softbuffer v0.4.6 target="softbuffer"}: cargo::core::compiler::fingerprint: fingerprint error for softbuffer v0.4.6/Check { test: false }/TargetInner { ..: lib_target("softbuffer", ["lib"], "C:\\Users\\allen\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\softbuffer-0.4.6\\src\\lib.rs", Edition2021) }
+   0.293148500s  INFO prepare_target{force=false package_id=softbuffer v0.4.6 target="softbuffer"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri\target\debug\.fingerprint\softbuffer-80c0b029cb5a1211\lib-softbuffer`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_path
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: git_filter_source_repo
+  17: <unknown>
+  18: <unknown>
+  19: git_midx_writer_dump
+  20: git_filter_source_repo
+  21: git_midx_writer_dump
+  22: BaseThreadInitThunk
+  23: RtlUserThreadStart
+   0.293923600s  INFO prepare_target{force=false package_id=windows-sys v0.59.0 target="windows_sys"}: cargo::core::compiler::fingerprint: fingerprint error for windows-sys v0.59.0/Check { test: false }/TargetInner { tested: false, doctest: false, ..: lib_target("windows_sys", ["lib"], "C:\\Users\\allen\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\windows-sys-0.59.0\\src\\lib.rs", Edition2021) }
+   0.293939300s  INFO prepare_target{force=false package_id=windows-sys v0.59.0 target="windows_sys"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri\target\debug\.fingerprint\windows-sys-4e1b1b0c2e2199bf\lib-windows_sys`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_path
+  12: git_filter_source_path
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: git_filter_source_repo
+  17: git_filter_source_repo
+  18: <unknown>
+  19: <unknown>
+  20: git_midx_writer_dump
+  21: git_filter_source_repo
+  22: git_midx_writer_dump
+  23: BaseThreadInitThunk
+  24: RtlUserThreadStart
+   0.295971000s  INFO prepare_target{force=false package_id=window-vibrancy v0.6.0 target="window_vibrancy"}: cargo::core::compiler::fingerprint: fingerprint error for window-vibrancy v0.6.0/Check { test: false }/TargetInner { ..: lib_target("window_vibrancy", ["lib"], "C:\\Users\\allen\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\window-vibrancy-0.6.0\\src\\lib.rs", Edition2021) }
+   0.295983700s  INFO prepare_target{force=false package_id=window-vibrancy v0.6.0 target="window_vibrancy"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri\target\debug\.fingerprint\window-vibrancy-e676e1a4d20c5519\lib-window_vibrancy`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: <unknown>
+  17: <unknown>
+  18: git_midx_writer_dump
+  19: git_filter_source_repo
+  20: git_midx_writer_dump
+  21: BaseThreadInitThunk
+  22: RtlUserThreadStart
+   0.296183900s  INFO prepare_target{force=false package_id=tauri-plugin-global-shortcut v2.3.1 target="tauri_plugin_global_shortcut"}: cargo::core::compiler::fingerprint: fingerprint error for tauri-plugin-global-shortcut v2.3.1/Check { test: false }/TargetInner { ..: lib_target("tauri_plugin_global_shortcut", ["lib"], "C:\\Users\\allen\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\tauri-plugin-global-shortcut-2.3.1\\src\\lib.rs", Edition2021) }
+   0.296194100s  INFO prepare_target{force=false package_id=tauri-plugin-global-shortcut v2.3.1 target="tauri_plugin_global_shortcut"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri\target\debug\.fingerprint\tauri-plugin-global-shortcut-1267beae6080c12e\lib-tauri_plugin_global_shortcut`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: <unknown>
+  16: <unknown>
+  17: git_midx_writer_dump
+  18: git_filter_source_repo
+  19: git_midx_writer_dump
+  20: BaseThreadInitThunk
+  21: RtlUserThreadStart
+   0.297029700s  INFO prepare_target{force=false package_id=global-hotkey v0.7.0 target="global_hotkey"}: cargo::core::compiler::fingerprint: fingerprint error for global-hotkey v0.7.0/Check { test: false }/TargetInner { ..: lib_target("global_hotkey", ["lib"], "C:\\Users\\allen\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\global-hotkey-0.7.0\\src\\lib.rs", Edition2021) }
+   0.297043800s  INFO prepare_target{force=false package_id=global-hotkey v0.7.0 target="global_hotkey"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri\target\debug\.fingerprint\global-hotkey-d9cdd26530557a1c\lib-global_hotkey`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: <unknown>
+  17: <unknown>
+  18: git_midx_writer_dump
+  19: git_filter_source_repo
+  20: git_midx_writer_dump
+  21: BaseThreadInitThunk
+  22: RtlUserThreadStart
+   0.297303900s  INFO prepare_target{force=false package_id=tauri-plugin-opener v2.5.2 target="tauri_plugin_opener"}: cargo::core::compiler::fingerprint: fingerprint error for tauri-plugin-opener v2.5.2/Check { test: false }/TargetInner { ..: lib_target("tauri_plugin_opener", ["lib"], "C:\\Users\\allen\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\tauri-plugin-opener-2.5.2\\src\\lib.rs", Edition2021) }
+   0.297314300s  INFO prepare_target{force=false package_id=tauri-plugin-opener v2.5.2 target="tauri_plugin_opener"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri\target\debug\.fingerprint\tauri-plugin-opener-d440d1815aa20fb2\lib-tauri_plugin_opener`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: <unknown>
+  16: <unknown>
+  17: git_midx_writer_dump
+  18: git_filter_source_repo
+  19: git_midx_writer_dump
+  20: BaseThreadInitThunk
+  21: RtlUserThreadStart
+   0.298090300s  INFO prepare_target{force=false package_id=rust v0.1.0 (C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri) target="rust_lib"}: cargo::core::compiler::fingerprint: fingerprint error for rust v0.1.0 (C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri)/Check { test: true }/TargetInner { ..: lib_target("rust_lib", ["staticlib", "cdylib", "rlib"], "C:\\Users\\allen\\Desktop\\ShortCutAI\\rust\\src-tauri\\src\\lib.rs", Edition2021) }
+   0.298104700s  INFO prepare_target{force=false package_id=rust v0.1.0 (C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri) target="rust_lib"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri\target\debug\.fingerprint\rust-eb700dc0504ab2e9\test-lib-rust_lib`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   0.298984200s  INFO prepare_target{force=false package_id=rust v0.1.0 (C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri) target="rust"}: cargo::core::compiler::fingerprint: fingerprint error for rust v0.1.0 (C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri)/Check { test: false }/TargetInner { name: "rust", doc: true, ..: with_path("C:\\Users\\allen\\Desktop\\ShortCutAI\\rust\\src-tauri\\src\\main.rs", Edition2021) }
+   0.298999000s  INFO prepare_target{force=false package_id=rust v0.1.0 (C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri) target="rust"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri\target\debug\.fingerprint\rust-579d507fc7249cde\bin-rust`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   0.299758900s  INFO prepare_target{force=false package_id=rust v0.1.0 (C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri) target="rust"}: cargo::core::compiler::fingerprint: fingerprint error for rust v0.1.0 (C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri)/Check { test: true }/TargetInner { name: "rust", doc: true, ..: with_path("C:\\Users\\allen\\Desktop\\ShortCutAI\\rust\\src-tauri\\src\\main.rs", Edition2021) }
+   0.299773000s  INFO prepare_target{force=false package_id=rust v0.1.0 (C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri) target="rust"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri\target\debug\.fingerprint\rust-77d9961470baea99\test-bin-rust`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+    Checking windows-sys v0.59.0
+    Checking softbuffer v0.4.6
+    Checking window-vibrancy v0.6.0
+    Checking global-hotkey v0.7.0
+    Checking tauri-runtime-wry v2.9.1
+    Checking tauri v2.9.2
+    Checking tauri-plugin-global-shortcut v2.3.1
+    Checking tauri-plugin-opener v2.5.2
+    Checking rust v0.1.0 (C:\Users\allen\Desktop\ShortCutAI\rust\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.47s

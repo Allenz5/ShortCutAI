@@ -20,5 +20,6 @@ contextBridge.exposeInMainWorld('api', {
   },
   getFloatingWindowBounds: () => ipcRenderer.invoke('floating-window-get-bounds'),
   moveFloatingWindow: (position) => ipcRenderer.send('floating-window-move', position),
+  setFloatingWindowIgnoreMouse: (ignore) => ipcRenderer.send('floating-window-ignore-mouse', !!ignore),
   openSettings: () => ipcRenderer.invoke('open-settings-window'),
 });
