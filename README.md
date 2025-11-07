@@ -2,7 +2,7 @@
 
   <img src="electron/public/assets/floating/nerd.png" alt="TextBuddy" width="64" height="64">
 
-  # **TextBuddy**
+  # <span style="font-size: 3rem;">TextBuddy</span>
 
   <p>Access AI faster, stay in your flow.</p>
 
@@ -16,27 +16,31 @@
 
 ---
 
-## Introduction
+## <span style="font-size: 2rem;">📘 Introduction</span>
 
 TextBuddy helps you reach AI instantly. Everyone has a few go-to prompts, and bouncing out of your active window just to retype them in ChatGPT ruins your focus. With one click, TextBuddy gives you the answer right where you are — no context switching, no friction.
 
-## Quick Start
+---
+
+## <span style="font-size: 2rem;">⚡ Quick Start</span>
 
 ### 1. Add your OpenAI API key  
-Open **Settings** and paste your API key (starts with `sk-`). TextBuddy uses this key for AI responses.
+Open **Settings** and paste your API key (starts with `sk-`). TextBuddy uses this key to communicate with the AI.
 
 ### 2. Record your hotkeys  
-In the main window, choose **Inline** or **Popup**, then click **Record Hotkey** to set shortcuts usable from any app.
+In the main window, choose **Inline** or **Popup**, then click **Record Hotkey** to assign shortcuts you can use from any app.
 
-- **Inline** → replaces highlighted text in place  
-- **Popup** → shows a floating response window
+- **Inline** → replaces highlighted text directly  
+- **Popup** → shows a floating window for responses  
 
 ### 3. Create your presets  
-Click **+ Add Preset**, give it a name, and write the instructions you want TextBuddy to follow (translate, rewrite, summarize, etc.).
+Click **+ Add Preset**, give it a friendly name, and write the instructions you want TextBuddy to follow (translate, rewrite, summarize… anything).
 
-## Troubleshooting
+---
 
-Need help? Join our Discord community:
+## <span style="font-size: 2rem;">🛠️ Troubleshooting</span>
+
+Need help or want to hang out with other users? Join our community:
 
 <p align="left">
   <a href="">
