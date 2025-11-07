@@ -1,0 +1,149 @@
+.logs-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+  padding: 32px 36px 40px;
+  background: #ffffff;
+  min-height: 100vh;
+  color: #000000;
+}
+
+.logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  border-bottom: 1px solid #F2F2F7;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.logs-header h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+
+.logs-header p {
+  margin: 0;
+  color: #6E6E73;
+  font-size: 15px;
+}
+
+.logs-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.logs-actions select,
+.logs-actions button {
+  border: 1px solid #E5E5EA;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #FFFFFF;
+  cursor: pointer;
+}
+
+.logs-actions button.danger {
+  border-color: #FF3B30;
+  color: #FF3B30;
+}
+
+.logs-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.logs-feed::-webkit-scrollbar {
+  width: 6px;
+}
+
+.logs-feed::-webkit-scrollbar-thumb {
+  background: #D1D1D6;
+  border-radius: 3px;
+}
+
+.logs-empty {
+  text-align: center;
+  color: #8E8E93;
+  padding: 60px 0;
+  border: 1px dashed #E5E5EA;
+  border-radius: 12px;
+}
+
+.log-card {
+  border: 1px solid #E5E5EA;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.log-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #6E6E73;
+}
+
+.log-level {
+  font-weight: 600;
+}
+
+.log-message,
+.log-meta-detail {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-meta-detail {
+  color: #6E6E73;
+}
+
+.log-card.level-fatal {
+  border-color: #FF3B30;
+}
+
+.log-card.level-error {
+  border-color: #FF3B30;
+}
+
+.log-card.level-warn {
+  border-color: #FF9500;
+}
+
+.log-card.level-info {
+  border-color: #34C759;
+}
+
+@media (max-width: 720px) {
+  .logs-container {
+    padding: 24px 20px;
+  }
+
+  .logs-header {
+    flex-direction: column;
+  }
+
+  .logs-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .logs-feed {
+    max-height: none;
+  }
+}

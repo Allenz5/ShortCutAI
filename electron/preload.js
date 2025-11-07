@@ -12,6 +12,14 @@ contextBridge.exposeInMainWorld('api', {
   onSelectorData: (callback) => ipcRenderer.on('selector-data', (_e, payload) => callback(payload)),
   chooseSelectorIndex: (token, index) => ipcRenderer.send(`selector-chosen:${token}`, index),
   showMainWindow: () => ipcRenderer.invoke('show-main-window'),
+  getLogs: () => ipcRenderer.invoke('get-logs'),
+  clearLogs: () => ipcRenderer.invoke('clear-logs'),
+  onLogsUpdated: (callback) => {
+    if (typeof callback !== 'function') return () => {};
+    const listener = (_event, logs) => callback(logs);
+    ipcRenderer.on('logs-updated', listener);
+    return () => ipcRenderer.removeListener('logs-updated', listener);
+  },
   onAIProcessing: (callback) => {
     if (typeof callback !== 'function') return () => {};
     const listener = (_event, status) => callback(status);
@@ -22,4 +30,5 @@ contextBridge.exposeInMainWorld('api', {
   moveFloatingWindow: (position) => ipcRenderer.send('floating-window-move', position),
   setFloatingWindowIgnoreMouse: (ignore) => ipcRenderer.send('floating-window-ignore-mouse', !!ignore),
   openSettings: () => ipcRenderer.invoke('open-settings-window'),
+  openLogs: () => ipcRenderer.invoke('open-logs-window'),
 });

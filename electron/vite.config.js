@@ -13,6 +13,7 @@ export default defineConfig({
         settings: path.resolve(__dirname, 'settings.html'),
         selector: path.resolve(__dirname, 'selector.html'),
         floating: path.resolve(__dirname, 'floating.html'),
+        logs: path.resolve(__dirname, 'logs.html'),
       },
     },
   },
@@ -20,4 +21,3 @@ export default defineConfig({
     port: 3000,
   },
 });
-

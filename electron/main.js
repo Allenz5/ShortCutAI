@@ -8,11 +8,117 @@ const AutoLaunch = require('electron-auto-launch');
 const configPath = path.join(app.getPath('userData'), 'config.json');
 const inputFieldConfigPath = path.join(app.getPath('userData'), 'inputfield-config.json');
 const selectionConfigPath = path.join(app.getPath('userData'), 'selection-config.json');
+const logStorePath = path.join(app.getPath('userData'), 'shortcutai-logs.json');
 
 const startedHidden = determineHiddenStartup();
 
 const APP_ICON_RELATIVE_PATH = path.join('assets', 'floating', 'nerd.png');
 let cachedAppIconPath;
+
+const LOG_MAX_ENTRIES = 300;
+const logEntries = [];
+
+function serializeLogArg(arg) {
+  if (arg instanceof Error) {
+    return arg.stack || `${arg.name}: ${arg.message}`;
+  }
+  if (typeof arg === 'object') {
+    try {
+      return JSON.stringify(arg);
+    } catch {
+      return String(arg);
+    }
+  }
+  return String(arg);
+}
+
+function loadPersistedLogs() {
+  try {
+    if (!fs.existsSync(logStorePath)) return;
+    const raw = JSON.parse(fs.readFileSync(logStorePath, 'utf8'));
+    if (Array.isArray(raw)) {
+      raw.slice(-LOG_MAX_ENTRIES).forEach((entry) => {
+        if (entry && typeof entry.message === 'string') {
+          logEntries.push(entry);
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Failed to load persisted logs', err);
+  }
+}
+
+function persistLogs() {
+  try {
+    fs.writeFileSync(logStorePath, JSON.stringify(logEntries.slice(-LOG_MAX_ENTRIES), null, 2));
+  } catch (err) {
+    // Avoid recursive logging by using console.warn
+    originalConsoleWarn?.('Failed to persist logs', err);
+  }
+}
+
+function notifyLogsUpdated() {
+  try {
+    const payload = logEntries.slice(-LOG_MAX_ENTRIES);
+    BrowserWindow.getAllWindows().forEach((win) => {
+      try {
+        win.webContents.send('logs-updated', payload);
+      } catch {}
+    });
+  } catch {}
+}
+
+function addLog(level, message, meta) {
+  const entry = {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    level,
+    message: typeof message === 'string' ? message : serializeLogArg(message),
+    meta: meta ? serializeLogArg(meta) : undefined,
+    timestamp: new Date().toISOString(),
+  };
+  logEntries.push(entry);
+  if (logEntries.length > LOG_MAX_ENTRIES) {
+    logEntries.splice(0, logEntries.length - LOG_MAX_ENTRIES);
+  }
+  persistLogs();
+  notifyLogsUpdated();
+}
+
+const originalConsoleError = console.error.bind(console);
+const originalConsoleWarn = console.warn.bind(console);
+const originalConsoleLog = console.log.bind(console);
+
+console.error = (...args) => {
+  try {
+    addLog('error', args.map(serializeLogArg).join(' '));
+  } catch {}
+  originalConsoleError(...args);
+};
+
+console.warn = (...args) => {
+  try {
+    addLog('warn', args.map(serializeLogArg).join(' '));
+  } catch {}
+  originalConsoleWarn(...args);
+};
+
+// Keep info logs concise to avoid noise
+function logInfo(...args) {
+  try {
+    addLog('info', args.map(serializeLogArg).join(' '));
+  } catch {}
+  originalConsoleLog(...args);
+}
+
+process.on('uncaughtException', (error) => {
+  addLog('fatal', error);
+});
+
+process.on('unhandledRejection', (reason) => {
+  addLog('fatal', reason instanceof Error ? reason : new Error(`Unhandled rejection: ${serializeLogArg(reason)}`));
+});
+
+loadPersistedLogs();
 
 function determineHiddenStartup() {
   try {
@@ -102,7 +208,7 @@ function getAutoLauncher() {
   if (appAutoLauncher) return appAutoLauncher;
   try {
     appAutoLauncher = new AutoLaunch({
-      name: 'ShortCutAI',
+      name: 'TextBuddy',
       isHidden: true,
     });
   } catch (e) {
@@ -185,9 +291,9 @@ function loadSelectionConfig() {
   const defaultConfig = {
     profiles: [
       {
-        id: 'default-editgrammar',
-        name: 'EditGrammar',
-        prompt: 'Please fix the grammar and spelling in the following text while keeping the original meaning:'
+        id: 'default-translate',
+        name: 'TranslateToEnglish',
+        prompt: 'Please translate the following text into clear, natural English while preserving the original meaning:'
       }
     ],
     general: { hotkey: '' }
@@ -208,6 +314,7 @@ function saveSelectionConfig(config) {
 let mainWindow;
 let settingsWindow;
 let selectorWindow;
+let logsWindow;
 let currentHotkey;
 let currentSelectionHotkey;
 let tray;
@@ -386,6 +493,7 @@ function registerGlobalHotkey() {
           console.error('No profiles configured');
           return;
         }
+        logInfo('[TextBuddy] InputField task started');
         const previousApp = process.platform === 'darwin' ? await getFrontmostAppMac() : null;
         const copyPromise = copySelectionText();
         const chosen = await showSelectorOverlay(profiles);
@@ -398,7 +506,7 @@ function registerGlobalHotkey() {
           selectedText = await copySelectionText();
         }
         if (!selectedText || selectedText.trim() === '') return;
-        console.log('[ShortCutAI] Copied text:', selectedText);
+        console.log('[TextBuddy] Copied text:', selectedText);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
           floatingWindow.webContents.send('ai-processing', 'input');
         }
@@ -408,7 +516,7 @@ function registerGlobalHotkey() {
           floatingWindow.webContents.send('ai-processing', 'idle');
         }
         if (!result) return;
-        console.log('[ShortCutAI] GPT output:', result);
+        console.log('[TextBuddy] GPT output:', result);
         if (process.platform === 'darwin' && previousApp) {
           await activateAppMac(previousApp);
           await sleep(150);
@@ -418,6 +526,7 @@ function registerGlobalHotkey() {
         if (process.platform === 'darwin' || process.platform === 'win32') {
           sendKeys('^v');
         }
+        logInfo('[TextBuddy] InputField task finished');
       } catch (err) {
         console.error('Hotkey flow error:', err);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
@@ -439,6 +548,7 @@ function registerGlobalHotkey() {
           console.error('No Selection profiles configured');
           return;
         }
+        logInfo('[TextBuddy] Selection task started');
         const previousApp = process.platform === 'darwin' ? await getFrontmostAppMac() : null;
         const copyPromise = copySelectionText();
         const chosen = await showSelectorOverlay(profiles);
@@ -451,7 +561,7 @@ function registerGlobalHotkey() {
           selectedText = await copySelectionText();
         }
         if (!selectedText || selectedText.trim() === '') return;
-        console.log('[ShortCutAI] Selection Copied text:', selectedText);
+        console.log('[TextBuddy] Selection Copied text:', selectedText);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
           floatingWindow.webContents.send('ai-processing', 'selection');
         }
@@ -461,12 +571,13 @@ function registerGlobalHotkey() {
           floatingWindow.webContents.send('ai-processing', 'idle');
         }
         if (!result) return;
-        console.log('[ShortCutAI] Selection GPT output:', result);
+        console.log('[TextBuddy] Selection GPT output:', result);
         if (process.platform === 'darwin' && previousApp) {
           await activateAppMac(previousApp);
           await sleep(150);
         }
         showResultDialog(result);
+        logInfo('[TextBuddy] Selection task finished');
         // Do not set clipboard or paste here
       } catch (err) {
         console.error('Selection Hotkey flow error:', err);
@@ -720,7 +831,7 @@ function createTray() {
   if (process.platform === 'darwin' && icon.isEmpty && icon.isEmpty()) {
     try { tray.setTitle('AI'); } catch {}
   }
-  tray.setToolTip('ShortCutAI');
+  tray.setToolTip('TextBuddy');
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -921,9 +1032,9 @@ function ensureMacAccessibility() {
         buttons: ['Open System Settings', 'Later'],
         defaultId: 0,
         cancelId: 1,
-        title: 'Enable Accessibility for ShortCutAI',
-        message: 'ShortCutAI needs Accessibility permission to read selections and paste results.',
-        detail: 'Go to System Settings → Privacy & Security → Accessibility and enable ShortCutAI.',
+        title: 'Enable Accessibility for TextBuddy',
+        message: 'TextBuddy needs Accessibility permission to read selections and paste results.',
+        detail: 'Go to System Settings → Privacy & Security → Accessibility and enable TextBuddy.',
       }).then((res) => {
         if (res.response === 0) {
           try { shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'); } catch {}
@@ -973,6 +1084,42 @@ function createSettingsWindow() {
   });
 }
 
+function createLogsWindow() {
+  if (logsWindow) {
+    logsWindow.focus();
+    return;
+  }
+
+  logsWindow = new BrowserWindow({
+    width: 720,
+    height: 560,
+    minWidth: 560,
+    minHeight: 460,
+    resizable: true,
+    title: 'Logs',
+    icon: getAppIconPath() || undefined,
+    autoHideMenuBar: true,
+    parent: mainWindow || undefined,
+    modal: false,
+    center: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  if (process.env.NODE_ENV === 'development') {
+    logsWindow.loadURL('http://localhost:3000/logs.html');
+  } else {
+    logsWindow.loadFile(path.join(__dirname, 'dist/logs.html'));
+  }
+
+  logsWindow.on('closed', () => {
+    logsWindow = null;
+  });
+}
+
 // IPC handlers
 ipcMain.handle('get-config', () => {
   return loadConfig();
@@ -1007,6 +1154,17 @@ ipcMain.handle('save-selection-config', (event, config) => {
   return { success: true };
 });
 
+ipcMain.handle('get-logs', () => {
+  return logEntries.slice(-LOG_MAX_ENTRIES);
+});
+
+ipcMain.handle('clear-logs', () => {
+  logEntries.splice(0, logEntries.length);
+  persistLogs();
+  notifyLogsUpdated();
+  return { success: true };
+});
+
 // Open Settings window from renderer
 ipcMain.handle('open-settings-window', () => {
   try {
@@ -1014,6 +1172,16 @@ ipcMain.handle('open-settings-window', () => {
     return { success: true };
   } catch (e) {
     console.error('Failed to open settings window:', e);
+    return { success: false, error: e?.message || 'Unknown error' };
+  }
+});
+
+ipcMain.handle('open-logs-window', () => {
+  try {
+    createLogsWindow();
+    return { success: true };
+  } catch (e) {
+    console.error('Failed to open logs window:', e);
     return { success: false, error: e?.message || 'Unknown error' };
   }
 });

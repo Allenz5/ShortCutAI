@@ -93,6 +93,13 @@
   text-transform: uppercase;
 }
 
+.secondary-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 .settings-btn {
   padding: 7px 12px;
   background: transparent;
@@ -109,6 +116,25 @@
 
 .settings-btn:hover {
   background: #F2F2F7;
+}
+
+.logs-btn {
+  padding: 4px 6px;
+  background: transparent;
+  color: #8E8E93;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.15s ease;
+  margin-top: 8px;
+}
+
+.logs-btn:hover {
+  color: #007AFF;
+  background: transparent;
 }
 
 .profile-item {
