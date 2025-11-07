@@ -1,5 +1,5 @@
 {
-  "name": "shortcutai",
+  "name": "textbuddy",
   "version": "1.0.0",
   "description": "",
   "main": "main.js",
@@ -28,7 +28,8 @@
     "react-dom": "^19.2.0"
   },
   "build": {
-    "appId": "com.shortcutai.app",
+    "appId": "com.textbuddy.app",
+    "productName": "TextBuddy",
     "files": [
       "dist/**/*",
       "main.js",

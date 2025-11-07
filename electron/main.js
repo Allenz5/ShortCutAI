@@ -8,7 +8,7 @@ const AutoLaunch = require('electron-auto-launch');
 const configPath = path.join(app.getPath('userData'), 'config.json');
 const inputFieldConfigPath = path.join(app.getPath('userData'), 'inputfield-config.json');
 const selectionConfigPath = path.join(app.getPath('userData'), 'selection-config.json');
-const logStorePath = path.join(app.getPath('userData'), 'shortcutai-logs.json');
+const logStorePath = path.join(app.getPath('userData'), 'textbuddy-logs.json');
 
 const startedHidden = determineHiddenStartup();
 
@@ -17,6 +17,9 @@ let cachedAppIconPath;
 
 const LOG_MAX_ENTRIES = 300;
 const logEntries = [];
+
+const defaultInlineHotkey = process.platform === 'darwin' ? 'Alt+Q' : 'Ctrl+Q';
+const defaultPopupHotkey = process.platform === 'darwin' ? 'Alt+E' : 'Ctrl+E';
 
 function serializeLogArg(arg) {
   if (arg instanceof Error) {
@@ -280,7 +283,7 @@ function loadInputFieldConfig() {
         prompt: 'Please fix the grammar and spelling in the following text while keeping the original meaning:'
       }
     ],
-    general: { hotkey: '' }
+    general: { hotkey: defaultInlineHotkey }
   };
   // Save the default config so it persists
   saveInputFieldConfig(defaultConfig);
@@ -314,7 +317,7 @@ function loadSelectionConfig() {
         prompt: 'Please translate the following text into clear, natural English while preserving the original meaning:'
       }
     ],
-    general: { hotkey: '' }
+    general: { hotkey: defaultPopupHotkey }
   };
   saveSelectionConfig(defaultConfig);
   return defaultConfig;
@@ -336,6 +339,8 @@ let logsWindow;
 let tutorialWindow;
 let currentHotkey;
 let currentSelectionHotkey;
+let inlineHotkeyExecuting = false;
+let popupHotkeyExecuting = false;
 let tray;
 let isQuitting = false;
 
@@ -475,6 +480,16 @@ function enforceProfileLimit(config) {
   return config;
 }
 
+function notifyHotkeyConflict(target, hotkey) {
+  try {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('hotkey-conflict', { target, hotkey });
+    }
+  } catch (e) {
+    console.error('Failed to notify hotkey conflict:', e);
+  }
+}
+
 function registerGlobalHotkey() {
   const inputCfg = loadInputFieldConfig();
   const selectionCfg = loadSelectionConfig();
@@ -505,6 +520,8 @@ function registerGlobalHotkey() {
   if (inputHotkey) {
     const accelerator = toAccelerator(inputHotkey);
     const ok = globalShortcut.register(accelerator, async () => {
+      if (inlineHotkeyExecuting) return;
+      inlineHotkeyExecuting = true;
       try {
         const freshConfig = loadInputFieldConfig();
         const profiles = (freshConfig.profiles || []).slice(0, 9);
@@ -551,15 +568,24 @@ function registerGlobalHotkey() {
         if (floatingWindow && !floatingWindow.isDestroyed()) {
           floatingWindow.webContents.send('ai-processing', 'idle');
         }
+      } finally {
+        inlineHotkeyExecuting = false;
       }
     });
-    if (ok) currentHotkey = accelerator;
+    if (ok) {
+      currentHotkey = accelerator;
+    } else {
+      console.warn(`Failed to register Inline hotkey "${inputHotkey}"`);
+      notifyHotkeyConflict('inline', inputHotkey);
+    }
   }
 
   // Register Popup hotkey if present (but DO NOT paste result)
   if (selectionHotkey) {
     const accelerator = toAccelerator(selectionHotkey);
     const ok = globalShortcut.register(accelerator, async () => {
+      if (popupHotkeyExecuting) return;
+      popupHotkeyExecuting = true;
       try {
         const freshConfig = loadSelectionConfig();
         const profiles = (freshConfig.profiles || []).slice(0, 9);
@@ -603,9 +629,16 @@ function registerGlobalHotkey() {
         if (floatingWindow && !floatingWindow.isDestroyed()) {
           floatingWindow.webContents.send('ai-processing', 'idle');
         }
+      } finally {
+        popupHotkeyExecuting = false;
       }
     });
-    if (ok) currentSelectionHotkey = accelerator;
+    if (ok) {
+      currentSelectionHotkey = accelerator;
+    } else {
+      console.warn(`Failed to register Popup hotkey "${selectionHotkey}"`);
+      notifyHotkeyConflict('popup', selectionHotkey);
+    }
   }
 }
 
@@ -1224,6 +1257,7 @@ ipcMain.handle('get-selection-config', () => {
 
 ipcMain.handle('save-selection-config', (event, config) => {
   saveSelectionConfig(enforceProfileLimit(config));
+  registerGlobalHotkey();
   return { success: true };
 });
 

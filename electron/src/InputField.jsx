@@ -8,6 +8,61 @@ function InputField() {
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [generalConfig, setGeneralConfig] = useState({ hotkey: '' });
   const [isRecording, setIsRecording] = useState(false);
+  const [hotkeyError, setHotkeyError] = useState('');
+  // Popup section state and handlers (logic housed in separate file)
+  const popup = usePopup();
+  const isMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform || '');
+
+  const formatHotkeyForDisplay = (hotkey) => {
+    if (!hotkey) return '';
+    const replacements = isMac
+      ? { Meta: 'Cmd', Alt: 'Option', Control: 'Ctrl', Ctrl: 'Ctrl' }
+      : { Meta: 'Win' };
+    return hotkey
+      .split('+')
+      .map((part) => replacements[part] || part)
+      .join('+');
+  };
+
+  const getKeyFromEvent = (event) => {
+    const { code, key } = event;
+    if (code) {
+      if (code.startsWith('Key') && code.length === 4) {
+        return code.slice(3).toUpperCase();
+      }
+      if (code.startsWith('Digit') && code.length === 6) {
+        return code.slice(5);
+      }
+      const codeMap = {
+        Space: 'Space',
+        Backspace: 'Backspace',
+        Enter: 'Enter',
+        Tab: 'Tab',
+        Escape: 'Escape',
+        ArrowUp: 'ArrowUp',
+        ArrowDown: 'ArrowDown',
+        ArrowLeft: 'ArrowLeft',
+        ArrowRight: 'ArrowRight',
+        Backquote: '`',
+        Minus: '-',
+        Equal: '=',
+        BracketLeft: '[',
+        BracketRight: ']',
+        Semicolon: ';',
+        Quote: "'",
+        Comma: ',',
+        Period: '.',
+        Slash: '/',
+        Backslash: '\\',
+      };
+      if (codeMap[code]) {
+        return codeMap[code];
+      }
+    }
+    if (key === ' ') return 'Space';
+    if (key && key.length === 1) return key.toUpperCase();
+    return key;
+  };
 
   useEffect(() => {
     loadInputFieldConfig();
@@ -94,6 +149,7 @@ function InputField() {
   };
 
   const handleStartRecording = () => {
+    setHotkeyError('');
     setIsRecording(true);
   };
 
@@ -123,14 +179,35 @@ function InputField() {
       return;
     }
 
-    // Convert key to more readable format
-    if (key === ' ') key = 'Space';
-    if (key.length === 1) key = key.toUpperCase();
+    // Convert key to more readable format resilient to Option/Alt combos
+    key = getKeyFromEvent(e);
+    if (!key) {
+      setIsRecording(false);
+      return;
+    }
 
     const hotkeyString = [...modifiers, key].join('+');
-    
+
+    const normalized = hotkeyString.toLowerCase();
+    const reservedCombos = new Set(['ctrl+c', 'meta+c', 'ctrl+v', 'meta+v']);
+    if (reservedCombos.has(normalized)) {
+      setHotkeyError(`"${hotkeyString}" is reserved for system copy/paste. Please choose a different shortcut.`);
+      setIsRecording(false);
+      return;
+    }
+
+    // Prevent inline/popup conflicts in advance
+    const otherHotkey = isInline ? popup.generalConfig?.hotkey : generalConfig?.hotkey;
+    if (otherHotkey && hotkeyString === otherHotkey) {
+      const otherLabel = isInline ? 'Popup' : 'Inline';
+      setHotkeyError(`"${hotkeyString}" is already used by the ${otherLabel} shortcut.`);
+      setIsRecording(false);
+      return;
+    }
+
     // Update currently active section's general config
     handleSectionGeneralConfigUpdate('hotkey', hotkeyString);
+    setHotkeyError('');
     setIsRecording(false);
   };
 
@@ -162,9 +239,6 @@ function InputField() {
 
   const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
 
-  // Popup section state and handlers (logic housed in separate file)
-  const popup = usePopup();
-
   // Derived bindings based on active section
   const isInline = activeSection === 'inline';
   const sectionProfiles = isInline ? profiles : popup.profiles;
@@ -176,6 +250,22 @@ function InputField() {
   const handleSectionProfileUpdate = isInline ? handleProfileUpdate : popup.handleProfileUpdate;
   const sectionGeneralConfig = isInline ? generalConfig : popup.generalConfig;
   const handleSectionGeneralConfigUpdate = isInline ? handleGeneralConfigUpdate : popup.handleGeneralConfigUpdate;
+
+  useEffect(() => {
+    if (!window.api?.onHotkeyConflict) return;
+    const unsubscribe = window.api.onHotkeyConflict((payload) => {
+      if (!payload) return;
+      const { target, hotkey } = payload;
+      const label = target === 'inline' ? 'Inline' : 'Popup';
+      const message = hotkey
+        ? `Unable to register "${hotkey}" for the ${label} shortcut. Please choose a different combination.`
+        : `Unable to register the ${label} shortcut. Please choose a different combination.`;
+      setHotkeyError(message);
+    });
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
 
   return (
     <div className="inline-container">
@@ -280,7 +370,7 @@ function InputField() {
                 <label htmlFor="hotkey">HotKey Binding</label>
                 <div className="hotkey-input-group">
                   <div className="hotkey-display">
-                    {sectionGeneralConfig.hotkey || 'Not set'}
+                    {formatHotkeyForDisplay(sectionGeneralConfig.hotkey) || 'Not set'}
                   </div>
                   <button
                     className={`record-hotkey-btn ${isRecording ? 'recording' : ''}`}
@@ -289,6 +379,11 @@ function InputField() {
                     {isRecording ? '⏺ Press a key combination...' : '🎯 Record Hotkey'}
                   </button>
                 </div>
+                {hotkeyError && (
+                  <div className="hotkey-error" role="alert">
+                    {hotkeyError}
+                  </div>
+                )}
                 <small className="help-text">
                   Click "Record Hotkey" and press your desired key combination
                 </small>
