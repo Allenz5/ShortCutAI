@@ -18,7 +18,7 @@
 
 # <span style="font-size: 2rem;">📘 Introduction</span>
 
-TextBuddy helps you reach AI instantly. Everyone has a few go-to prompts, and bouncing out of your active window just to retype them in ChatGPT ruins your focus. With one click, TextBuddy gives you the answer right where you are — no context switching, no friction.
+TextBuddy is built to help you reach AI faster. We all have a few go-to prompts, and jumping out of your current page just to retype them in ChatGPT is pure torture. With one click, TextBuddy gives you what you need without breaking your focus.
 
 ---
 
