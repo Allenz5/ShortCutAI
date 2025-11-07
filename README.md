@@ -16,13 +16,13 @@
 
 ---
 
-## <span style="font-size: 2rem;">📘 Introduction</span>
+# <span style="font-size: 2rem;">📘 Introduction</span>
 
 TextBuddy helps you reach AI instantly. Everyone has a few go-to prompts, and bouncing out of your active window just to retype them in ChatGPT ruins your focus. With one click, TextBuddy gives you the answer right where you are — no context switching, no friction.
 
 ---
 
-## <span style="font-size: 2rem;">⚡ Quick Start</span>
+# <span style="font-size: 2rem;">⚡ Quick Start</span>
 
 ### 1. Add your OpenAI API key  
 Open **Settings** and paste your API key (starts with `sk-`). TextBuddy uses this key to communicate with the AI.
@@ -38,7 +38,7 @@ Click **+ Add Preset**, give it a friendly name, and write the instructions you 
 
 ---
 
-## <span style="font-size: 2rem;">🛠️ Troubleshooting</span>
+# <span style="font-size: 2rem;">🛠️ Troubleshooting</span>
 
 Need help or want to hang out with other users? Join our community:
 
