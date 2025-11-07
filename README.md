@@ -40,8 +40,6 @@ Click **+ Add Preset**, give it a friendly name, and write the instructions you 
 
 # <span style="font-size: 2rem;">🛠️ Troubleshooting</span>
 
-Need help or want to hang out with other users? Join our community:
-
 <p align="left">
   <a href="">
     <img src="https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=for-the-badge&logo=discord&logoColor=white"/>
