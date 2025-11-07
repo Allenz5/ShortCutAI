@@ -57,7 +57,7 @@ Click `+ Add Preset`, give it a friendly name, and write the instructions you wa
 # <span style="font-size: 2rem;">📝 Changelog</span>
 
 ### Planned
-- [ ] Screenshot  
+- [ ] Screenshot Shortcut 
 - [ ] Switch AI models  
 - [ ] Account login (no API key)
 
