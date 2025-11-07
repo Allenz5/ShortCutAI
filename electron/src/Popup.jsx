@@ -1,22 +1,22 @@
 import { useState, useEffect } from 'react';
 
-export function useSelection() {
+export function usePopup() {
   const [profiles, setProfiles] = useState([]);
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [generalConfig, setGeneralConfig] = useState({ hotkey: '' });
 
   useEffect(() => {
-    loadSelectionConfig();
+    loadPopupConfig();
   }, []);
 
-  const loadSelectionConfig = async () => {
+  const loadPopupConfig = async () => {
     try {
       const config = await window.api.getSelectionConfig();
       setProfiles(config.profiles || []);
       setGeneralConfig(config.general || { hotkey: '' });
     } catch (error) {
       // Graceful: if not implemented yet, keep defaults
-      console.warn('Selection config API not available yet; using defaults');
+      console.warn('Popup config API not available yet; using defaults');
     }
   };
 
@@ -28,23 +28,23 @@ export function useSelection() {
         general: generalConfig,
       });
     } catch (error) {
-      console.error('Error saving Selection config:', error);
+      console.error('Error saving Popup config:', error);
       // No alert to avoid noise while feature not implemented
     }
   };
 
   const handleAddProfile = () => {
     if (profiles.length >= 9) {
-      alert('Maximum 9 profiles allowed (use number keys 1-9 to select).');
+      alert('Maximum 9 presets allowed (use number keys 1-9 to select).');
       return;
     }
 
-    // Ensure unique profile names
+    // Ensure unique preset names
     let profileNumber = profiles.length + 1;
-    let newName = `Profile ${profileNumber}`;
+    let newName = `Preset ${profileNumber}`;
     while (profiles.some(p => p.name === newName)) {
       profileNumber++;
-      newName = `Profile ${profileNumber}`;
+      newName = `Preset ${profileNumber}`;
     }
     const newProfile = {
       id: Date.now().toString(),
@@ -61,9 +61,9 @@ export function useSelection() {
   };
 
   const handleDeleteProfile = (profileId) => {
-    // Prevent deleting the last profile
+    // Prevent deleting the last preset
     if (profiles.length <= 1) {
-      alert('Cannot delete the last profile. You must have at least one profile.');
+      alert('Cannot delete the last preset. You must have at least one preset.');
       return;
     }
     
@@ -75,7 +75,7 @@ export function useSelection() {
   };
 
   const handleProfileUpdate = (field, value) => {
-    // Prevent empty profile names
+    // Prevent empty preset names
     if (field === 'name' && !value.trim()) {
       return;
     }

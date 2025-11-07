@@ -58,7 +58,7 @@ function Selector() {
           fontSize: 15,
           color: '#8E8E93',
           textAlign: 'center'
-        }}>No profiles</div>
+        }}>No presets</div>
       ) : profiles.map((p, i) => (
         <div
           key={p.id}
@@ -105,5 +105,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <Selector />
   </React.StrictMode>
 );
-
 

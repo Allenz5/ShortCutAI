@@ -19,7 +19,7 @@ body {
   min-height: 100vh;
 }
 
-.app:has(.inputfield-container) {
+.app:has(.inline-container) {
   padding: 0;
 }
 
@@ -138,7 +138,7 @@ strong {
   margin: 0 4px;
 }
 
-/* Remove gaps on left/top when InputField is active */
-.app:has(.inputfield-container) .content-container {
+/* Remove gaps on left/top when Inline mode is active */
+.app:has(.inline-container) .content-container {
   padding: 0;
 }

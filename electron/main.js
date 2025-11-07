@@ -251,9 +251,9 @@ function loadInputFieldConfig() {
       return JSON.parse(fs.readFileSync(inputFieldConfigPath, 'utf8'));
     }
   } catch (error) {
-    console.error('Error loading InputField config:', error);
+    console.error('Error loading Inline config:', error);
   }
-  // Return default config with EditGrammar profile
+  // Return default config with EditGrammar preset
   const defaultConfig = {
     profiles: [
       {
@@ -274,20 +274,20 @@ function saveInputFieldConfig(config) {
   try {
     fs.writeFileSync(inputFieldConfigPath, JSON.stringify(config, null, 2));
   } catch (error) {
-    console.error('Error saving InputField config:', error);
+    console.error('Error saving Inline config:', error);
   }
 }
 
-// Load or initialize Selection config
+// Load or initialize Popup config
 function loadSelectionConfig() {
   try {
     if (fs.existsSync(selectionConfigPath)) {
       return JSON.parse(fs.readFileSync(selectionConfigPath, 'utf8'));
     }
   } catch (error) {
-    console.error('Error loading Selection config:', error);
+    console.error('Error loading Popup config:', error);
   }
-  // Default Selection config mirrors InputField structure
+  // Default Popup config mirrors Inline structure
   const defaultConfig = {
     profiles: [
       {
@@ -302,12 +302,12 @@ function loadSelectionConfig() {
   return defaultConfig;
 }
 
-// Save Selection config
+// Save Popup config
 function saveSelectionConfig(config) {
   try {
     fs.writeFileSync(selectionConfigPath, JSON.stringify(config, null, 2));
   } catch (error) {
-    console.error('Error saving Selection config:', error);
+    console.error('Error saving Popup config:', error);
   }
 }
 
@@ -476,7 +476,7 @@ function registerGlobalHotkey() {
     globalShortcut.unregister(currentHotkey);
     currentHotkey = undefined;
   }
-  // Unregister previous Selection hotkey
+  // Unregister previous Popup hotkey
   if (currentSelectionHotkey) {
     globalShortcut.unregister(currentSelectionHotkey);
     currentSelectionHotkey = undefined;
@@ -490,10 +490,10 @@ function registerGlobalHotkey() {
         const freshConfig = loadInputFieldConfig();
         const profiles = (freshConfig.profiles || []).slice(0, 9);
         if (!profiles || profiles.length === 0) {
-          console.error('No profiles configured');
+          console.error('No Inline presets configured');
           return;
         }
-        logInfo('[TextBuddy] InputField task started');
+        logInfo('[TextBuddy] Inline task started');
         const previousApp = process.platform === 'darwin' ? await getFrontmostAppMac() : null;
         const copyPromise = copySelectionText();
         const chosen = await showSelectorOverlay(profiles);
@@ -506,7 +506,7 @@ function registerGlobalHotkey() {
           selectedText = await copySelectionText();
         }
         if (!selectedText || selectedText.trim() === '') return;
-        console.log('[TextBuddy] Copied text:', selectedText);
+        console.log('[TextBuddy] Inline copied text:', selectedText);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
           floatingWindow.webContents.send('ai-processing', 'input');
         }
@@ -516,7 +516,7 @@ function registerGlobalHotkey() {
           floatingWindow.webContents.send('ai-processing', 'idle');
         }
         if (!result) return;
-        console.log('[TextBuddy] GPT output:', result);
+        console.log('[TextBuddy] Inline GPT output:', result);
         if (process.platform === 'darwin' && previousApp) {
           await activateAppMac(previousApp);
           await sleep(150);
@@ -526,7 +526,7 @@ function registerGlobalHotkey() {
         if (process.platform === 'darwin' || process.platform === 'win32') {
           sendKeys('^v');
         }
-        logInfo('[TextBuddy] InputField task finished');
+        logInfo('[TextBuddy] Inline task finished');
       } catch (err) {
         console.error('Hotkey flow error:', err);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
@@ -537,7 +537,7 @@ function registerGlobalHotkey() {
     if (ok) currentHotkey = accelerator;
   }
 
-  // Register Selection hotkey if present (but DO NOT paste result)
+  // Register Popup hotkey if present (but DO NOT paste result)
   if (selectionHotkey) {
     const accelerator = toAccelerator(selectionHotkey);
     const ok = globalShortcut.register(accelerator, async () => {
@@ -545,10 +545,10 @@ function registerGlobalHotkey() {
         const freshConfig = loadSelectionConfig();
         const profiles = (freshConfig.profiles || []).slice(0, 9);
         if (!profiles || profiles.length === 0) {
-          console.error('No Selection profiles configured');
+          console.error('No Popup presets configured');
           return;
         }
-        logInfo('[TextBuddy] Selection task started');
+        logInfo('[TextBuddy] Popup task started');
         const previousApp = process.platform === 'darwin' ? await getFrontmostAppMac() : null;
         const copyPromise = copySelectionText();
         const chosen = await showSelectorOverlay(profiles);
@@ -561,9 +561,9 @@ function registerGlobalHotkey() {
           selectedText = await copySelectionText();
         }
         if (!selectedText || selectedText.trim() === '') return;
-        console.log('[TextBuddy] Selection Copied text:', selectedText);
+        console.log('[TextBuddy] Popup copied text:', selectedText);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
-          floatingWindow.webContents.send('ai-processing', 'selection');
+          floatingWindow.webContents.send('ai-processing', 'popup');
         }
         const promptText = `${profile.prompt}\n\n${selectedText}`;
         const result = await callGptWithPrompt(promptText);
@@ -571,16 +571,16 @@ function registerGlobalHotkey() {
           floatingWindow.webContents.send('ai-processing', 'idle');
         }
         if (!result) return;
-        console.log('[TextBuddy] Selection GPT output:', result);
+        console.log('[TextBuddy] Popup GPT output:', result);
         if (process.platform === 'darwin' && previousApp) {
           await activateAppMac(previousApp);
           await sleep(150);
         }
         showResultDialog(result);
-        logInfo('[TextBuddy] Selection task finished');
+        logInfo('[TextBuddy] Popup task finished');
         // Do not set clipboard or paste here
       } catch (err) {
-        console.error('Selection Hotkey flow error:', err);
+        console.error('Popup Hotkey flow error:', err);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
           floatingWindow.webContents.send('ai-processing', 'idle');
         }
@@ -592,9 +592,9 @@ function registerGlobalHotkey() {
 
 function showSelectorOverlay(profiles) {
   return new Promise((resolve) => {
-    // Validate profiles exist
+    // Validate presets exist
     if (!profiles || profiles.length === 0) {
-      console.error('No profiles available for selector');
+      console.error('No presets available for selector');
       resolve(null);
       return;
     }
@@ -680,7 +680,7 @@ function showSelectorOverlay(profiles) {
       };
       // Escape to cancel
       reg('Escape', () => chooseAndClose(-1));
-      // Number keys 1..9 select profile
+        // Number keys 1..9 select preset
       for (let i = 1; i <= Math.min(9, count); i += 1) {
         reg(String(i), () => chooseAndClose(i - 1));
       }

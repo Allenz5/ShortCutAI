@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './InputField.css';
-import { useSelection } from './Selection';
+import { usePopup } from './Popup';
 
 function InputField() {
-  const [activeSection, setActiveSection] = useState('inputfield'); // 'inputfield' | 'selection'
+  const [activeSection, setActiveSection] = useState('inline'); // 'inline' | 'popup'
   const [profiles, setProfiles] = useState([]);
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [generalConfig, setGeneralConfig] = useState({ hotkey: '' });
@@ -19,8 +19,8 @@ function InputField() {
       setProfiles(config.profiles || []);
       setGeneralConfig(config.general || { hotkey: '' });
     } catch (error) {
-      console.error('Error loading InputField config:', error);
-      alert('Failed to load configuration. Please restart the application.');
+      console.error('Error loading Inline config:', error);
+      alert('Failed to load Inline configuration. Please restart TextBuddy.');
     }
   };
 
@@ -31,23 +31,23 @@ function InputField() {
         general: generalConfig,
       });
     } catch (error) {
-      console.error('Error saving config:', error);
-      alert('Failed to save configuration. Your changes may not be saved.');
+      console.error('Error saving Inline config:', error);
+      alert('Failed to save Inline configuration. Your changes may not be saved.');
     }
   };
 
   const handleAddProfile = () => {
     if (profiles.length >= 9) {
-      alert('Maximum 9 profiles allowed (use number keys 1-9 to select).');
+      alert('Maximum 9 presets allowed (use number keys 1-9 to select).');
       return;
     }
     
-    // Ensure unique profile names
+    // Ensure unique preset names
     let profileNumber = profiles.length + 1;
-    let newName = `Profile ${profileNumber}`;
+    let newName = `Preset ${profileNumber}`;
     while (profiles.some(p => p.name === newName)) {
       profileNumber++;
-      newName = `Profile ${profileNumber}`;
+      newName = `Preset ${profileNumber}`;
     }
     const newProfile = {
       id: Date.now().toString(),
@@ -64,9 +64,9 @@ function InputField() {
   };
 
   const handleDeleteProfile = (profileId) => {
-    // Prevent deleting the last profile
+    // Prevent deleting the last preset
     if (profiles.length <= 1) {
-      alert('Cannot delete the last profile. You must have at least one profile.');
+      alert('Cannot delete the last preset. You must have at least one preset.');
       return;
     }
     
@@ -78,7 +78,7 @@ function InputField() {
   };
 
   const handleProfileUpdate = (field, value) => {
-    // Prevent empty profile names
+    // Prevent empty preset names
     if (field === 'name' && !value.trim()) {
       return;
     }
@@ -162,30 +162,30 @@ function InputField() {
 
   const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
 
-  // Selection section state and handlers (logic housed in separate file)
-  const selection = useSelection();
+  // Popup section state and handlers (logic housed in separate file)
+  const popup = usePopup();
 
   // Derived bindings based on active section
-  const isInputField = activeSection === 'inputfield';
-  const sectionProfiles = isInputField ? profiles : selection.profiles;
-  const sectionSelectedProfileId = isInputField ? selectedProfileId : selection.selectedProfileId;
-  const sectionSelectedProfile = isInputField ? selectedProfile : selection.selectedProfile;
-  const handleAddSectionProfile = isInputField ? handleAddProfile : selection.handleAddProfile;
-  const handleSectionProfileClick = isInputField ? handleProfileClick : selection.handleProfileClick;
-  const handleSectionDeleteProfile = isInputField ? handleDeleteProfile : selection.handleDeleteProfile;
-  const handleSectionProfileUpdate = isInputField ? handleProfileUpdate : selection.handleProfileUpdate;
-  const sectionGeneralConfig = isInputField ? generalConfig : selection.generalConfig;
-  const handleSectionGeneralConfigUpdate = isInputField ? handleGeneralConfigUpdate : selection.handleGeneralConfigUpdate;
+  const isInline = activeSection === 'inline';
+  const sectionProfiles = isInline ? profiles : popup.profiles;
+  const sectionSelectedProfileId = isInline ? selectedProfileId : popup.selectedProfileId;
+  const sectionSelectedProfile = isInline ? selectedProfile : popup.selectedProfile;
+  const handleAddSectionProfile = isInline ? handleAddProfile : popup.handleAddProfile;
+  const handleSectionProfileClick = isInline ? handleProfileClick : popup.handleProfileClick;
+  const handleSectionDeleteProfile = isInline ? handleDeleteProfile : popup.handleDeleteProfile;
+  const handleSectionProfileUpdate = isInline ? handleProfileUpdate : popup.handleProfileUpdate;
+  const sectionGeneralConfig = isInline ? generalConfig : popup.generalConfig;
+  const handleSectionGeneralConfigUpdate = isInline ? handleGeneralConfigUpdate : popup.handleGeneralConfigUpdate;
 
   return (
-    <div className="inputfield-container">
+    <div className="inline-container">
       {/* Left Panel */}
       <div className="left-panel">
         <button
-          className={`config-btn ${isInputField ? 'active' : ''}`}
+          className={`config-btn ${isInline ? 'active' : ''}`}
           onClick={() => {
-            setActiveSection('inputfield');
-            setSelectedProfileId(null); // Always show InputField general config when switching
+            setActiveSection('inline');
+            setSelectedProfileId(null); // Always show Inline general config when switching
           }}
         >
           <span className="icon" aria-hidden>
@@ -194,13 +194,13 @@ function InputField() {
               <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z" />
             </svg>
           </span>
-          <span>InputField</span>
+          <span>Inline</span>
         </button>
         <button
-          className={`config-btn ${!isInputField ? 'active' : ''}`}
+          className={`config-btn ${!isInline ? 'active' : ''}`}
           onClick={() => {
-            setActiveSection('selection');
-            selection.setSelectedProfileId(null); // Always show Selection general config when switching
+            setActiveSection('popup');
+            popup.setSelectedProfileId(null); // Always show Popup general config when switching
           }}
         >
           <span className="icon" aria-hidden>
@@ -209,10 +209,10 @@ function InputField() {
               <path d="M3 10h18v11H3z" />
             </svg>
           </span>
-          <span>Selection</span>
+          <span>Popup</span>
         </button>
-        <div className="menu-title">Profiles</div>
-        <button className="add-profile-btn" onClick={handleAddSectionProfile}>+ Add Profile</button>
+        <div className="menu-title">Presets</div>
+        <button className="add-profile-btn" onClick={handleAddSectionProfile}>+ Add Preset</button>
         <div className="profile-list">
           {sectionProfiles.map((profile) => (
             <button
@@ -234,9 +234,9 @@ function InputField() {
       {/* Right Panel */}
       <div className="right-panel">
         {sectionSelectedProfile ? (
-          // Profile Editor
+          // Preset Editor
           <div className="profile-editor">
-            <h2>Profile Settings</h2>
+            <h2>Preset Settings</h2>
             <div className="form-group">
               <label htmlFor="profile-name">Name</label>
               <input
@@ -262,16 +262,18 @@ function InputField() {
               className="delete-btn"
               onClick={() => handleSectionDeleteProfile(sectionSelectedProfile.id)}
             >
-              Delete Profile
+              Delete Preset
             </button>
           </div>
         ) : (
           // General Configuration
           <div className="general-config">
-            <h2>{isInputField ? 'InputField Configuration' : 'Selection Configuration'}</h2>
+            <h2>{isInline ? 'Inline Configuration' : 'Popup Configuration'}</h2>
             <>
               <p className="config-description">
-                Global hotkey to trigger the profile selector ({isInputField ? 'InputField' : 'Selection'}).
+                {isInline
+                  ? 'Select some text, then press this shortcut to choose a preset and replace the highlighted text with the AI answer.'
+                  : 'Select some text, then press this shortcut to choose a preset and read the AI answer in a small popup window.'}
               </p>
               <div className="form-group">
                 <label htmlFor="hotkey">HotKey Binding</label>

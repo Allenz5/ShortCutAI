@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-const PROCESSING_STATUSES = new Set(['input', 'selection']);
+const PROCESSING_STATUSES = new Set(['input', 'popup']);
 
 function FloatingButton() {
   const [isHovered, setIsHovered] = React.useState(false);
@@ -44,7 +44,7 @@ function FloatingButton() {
     return {
       idle: resolve('./assets/floating/nerd.png'),
       input: resolve('./assets/floating/thinking1.png'),
-      selection: resolve('./assets/floating/thinking2.png'),
+      popup: resolve('./assets/floating/thinking2.png'),
     };
   }, []);
 
@@ -216,14 +216,14 @@ function FloatingButton() {
   }, [handlePointerEnd]);
 
   const imageSrc =
-    status === 'selection'
-      ? assetSources.selection
+    status === 'popup'
+      ? assetSources.popup
       : status === 'input'
         ? assetSources.input
         : assetSources.idle;
   const imageAlt =
-    status === 'selection'
-      ? 'AI processing selection'
+    status === 'popup'
+      ? 'AI processing popup'
       : status === 'input'
         ? 'AI processing input'
         : 'AI ready';

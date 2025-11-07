@@ -3,7 +3,7 @@ import './App.css';
 import InputField from './InputField';
 
 function App() {
-  const [currentView, setCurrentView] = useState('inputfield');
+  const [currentView, setCurrentView] = useState('inline');
 
   useEffect(() => {
     // Listen for view changes from the menu
@@ -16,15 +16,15 @@ function App() {
 
   const renderContent = () => {
     switch (currentView) {
-      case 'inputfield':
+      case 'inline':
         return <InputField />;
       
-      case 'selection':
+      case 'popup':
         return (
           <div className="view-content">
-            <h1>Selection View</h1>
+            <h1>Popup View</h1>
             <p className="view-description">
-              This is the Selection view. Here you can work with selected text.
+              This is the Popup view. Here you can work with selected text in a dialog.
             </p>
           </div>
         );
@@ -48,7 +48,8 @@ function App() {
               <p>Select a view from the menu bar:</p>
               <ul>
                 <li><strong>Settings</strong> - Configure the app</li>
-                <li><strong>InputField</strong> - Process text input</li>
+                <li><strong>Inline</strong> - Process text inline</li>
+                <li><strong>Popup</strong> - Process text in a floating dialog</li>
               </ul>
             </div>
           </div>
@@ -66,4 +67,3 @@ function App() {
 }
 
 export default App;
-
