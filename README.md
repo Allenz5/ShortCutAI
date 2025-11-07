@@ -22,7 +22,7 @@ TextBuddy is built to help you reach AI faster. We all have a few go-to prompts,
 
 <p align="center">
   <img src="assets/inline.gif" width="360" style="margin-top:-20px; margin-bottom:-20px;">
-  <img src="assets/popup.gif" width="360" style="margin-top:-20px; margin-bottom:-20px;">
+  <img src="assets/popup.gif" width="360" ">
 </p>
 
 # <span style="font-size: 2rem;">⚡ Quick Start</span>
