@@ -33,6 +33,7 @@ contextBridge.exposeInMainWorld('api', {
   openLogs: () => ipcRenderer.invoke('open-logs-window'),
   openTutorial: () => ipcRenderer.invoke('open-tutorial-window'),
   markTutorialSeen: () => ipcRenderer.invoke('tutorial-mark-seen'),
+  closeTutorial: () => ipcRenderer.invoke('close-tutorial-window'),
   onHotkeyConflict: (callback) => {
     if (typeof callback !== 'function') return () => {};
     const listener = (_event, payload) => callback(payload);

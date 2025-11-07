@@ -1204,7 +1204,6 @@ function createTutorialWindow() {
     title: 'Getting Started',
     icon: getAppIconPath() || undefined,
     autoHideMenuBar: true,
-    parent: mainWindow || undefined,
     modal: false,
     center: true,
     webPreferences: {
@@ -1308,6 +1307,18 @@ ipcMain.handle('tutorial-mark-seen', () => {
   return { success: true };
 });
 
+ipcMain.handle('close-tutorial-window', () => {
+  try {
+    if (tutorialWindow && !tutorialWindow.isDestroyed()) {
+      tutorialWindow.close();
+    }
+    return { success: true };
+  } catch (e) {
+    console.error('Failed to close tutorial window:', e);
+    return { success: false, error: e?.message || 'Unknown error' };
+  }
+});
+
 ipcMain.handle('show-main-window', () => {
   showMainWindow();
   return { success: true };
@@ -1369,17 +1380,11 @@ app.whenReady().then(() => {
   } catch {}
   // Ensure login item points to the correct executable after installs/updates
   try { configureAutoStart(startupConfig); } catch {}
-  // Show tutorial once for first-time users
-  try {
-    if (!startupConfig?.hasSeenTutorial) {
-      createTutorialWindow();
-    }
-  } catch {}
-  // If no OpenAI API key is configured, prompt user to open Settings on startup
+  // Show tutorial once for first-time users or if no API key is configured
   try {
     const apiKey = (startupConfig && typeof startupConfig.apiKey === 'string') ? startupConfig.apiKey.trim() : '';
-    if (!apiKey) {
-      createSettingsWindow();
+    if (!apiKey || !startupConfig?.hasSeenTutorial) {
+      createTutorialWindow();
     }
   } catch {}
   try {

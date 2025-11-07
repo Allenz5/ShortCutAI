@@ -22,7 +22,7 @@ function Tutorial() {
 
   const handleClose = () => {
     window.api?.markTutorialSeen?.();
-    window.close();
+    window.api?.closeTutorial?.();
   };
 
   return (
