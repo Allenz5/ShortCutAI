@@ -10,8 +10,6 @@ TextBuddy is built to help you reach AI faster. We all have a few go-to prompts,
 
 ## Quick Start
 
-Follow these three quick steps and you'll be rewriting text like a pro.
-
 ### Step 1: Add your OpenAI API key
 
 Open Settings and paste your OpenAI key (starts with "sk-"). TextBuddy uses this to talk to the AI.
