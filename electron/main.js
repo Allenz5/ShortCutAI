@@ -869,16 +869,14 @@ function createTray() {
   tray.setContextMenu(contextMenu);
 
   tray.on('click', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      createWindow({ visible: true });
+    }
     if (!mainWindow) return;
     if (mainWindow.isVisible()) {
       mainWindow.focus();
     } else {
-      if (process.platform === 'darwin') {
-        try { app.dock.show(); } catch {}
-      }
-      mainWindow.show();
-      if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
-      mainWindow.focus();
+      showMainWindow();
     }
   });
 }
@@ -979,13 +977,19 @@ function centerWindow(win, width, height) {
   win.setBounds({ x, y, width, height });
 }
 
-function createWindow() {
+function createWindow(options = {}) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    return mainWindow;
+  }
+
+  const visible = options.visible !== undefined ? options.visible : true;
+
   mainWindow = new BrowserWindow({
     width: 1024,
     height: 720,
     minWidth: 880,
     minHeight: 680,
-    show: !startedHidden,
+    show: visible,
     icon: getAppIconPath() || undefined,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -996,7 +1000,7 @@ function createWindow() {
 
   centerWindow(mainWindow, 1024, 680);
 
-  if (startedHidden) {
+  if (!visible) {
     mainWindow.once('ready-to-show', () => {
       if (!mainWindow || mainWindow.isDestroyed()) return;
       if (process.platform === 'win32') {
@@ -1035,6 +1039,19 @@ function createWindow() {
       floatingWindow.show();
     }
   });
+}
+
+function showMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    createWindow({ visible: true });
+  }
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (process.platform === 'darwin') {
+    try { app.dock.show(); } catch {}
+  }
+  mainWindow.show();
+  if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
+  mainWindow.focus();
 }
 
 function ensureMacAccessibility() {
@@ -1258,14 +1275,7 @@ ipcMain.handle('tutorial-mark-seen', () => {
 });
 
 ipcMain.handle('show-main-window', () => {
-  if (mainWindow) {
-    if (process.platform === 'darwin') {
-      try { app.dock.show(); } catch {}
-    }
-    mainWindow.show();
-    if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
-    mainWindow.focus();
-  }
+  showMainWindow();
   return { success: true };
 });
 
@@ -1312,7 +1322,9 @@ app.whenReady().then(() => {
       }
     }
   } catch {}
-  createWindow();
+  if (!startedHidden) {
+    createWindow({ visible: true });
+  }
   createFloatingWindow();
   ensureMacAccessibility();
   registerGlobalHotkey();
@@ -1347,16 +1359,7 @@ app.whenReady().then(() => {
     }
   } catch {}
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    } else if (mainWindow) {
-      if (process.platform === 'darwin') {
-        try { app.dock.show(); } catch {}
-      }
-      mainWindow.show();
-      if (process.platform === 'win32') mainWindow.setSkipTaskbar(false);
-      mainWindow.focus();
-    }
+    showMainWindow();
   });
 });
 
