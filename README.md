@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="electron/public/assets/floating/nerd.png" alt="TextBuddy" width="64" height="64">
+  <img src="electron/public/assets/floating/nerd.png" alt="GoBuddy" width="64" height="64">
 
   # <span style="font-size: 3rem;">TextBuddy</span>
 
