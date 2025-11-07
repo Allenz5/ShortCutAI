@@ -20,7 +20,6 @@
 
 TextBuddy is built to help you reach AI faster. We all have a few go-to prompts, and jumping out of your current page just to retype them in ChatGPT is pure torture. With one click, TextBuddy gives you what you need without breaking your focus.
 
----
 
 # <span style="font-size: 2rem;">⚡ Quick Start</span>
 
@@ -36,7 +35,6 @@ In the main window, choose **Inline** or **Popup**, then click **Record Hotkey**
 ### 3. Create your presets  
 Click **+ Add Preset**, give it a friendly name, and write the instructions you want TextBuddy to follow (translate, rewrite, summarize… anything).
 
----
 
 # <span style="font-size: 2rem;">🛠️ Troubleshooting</span>
 
