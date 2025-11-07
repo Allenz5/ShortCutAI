@@ -43,16 +43,16 @@ TextBuddy is built to help you reach AI faster. We all have a few go-to prompts,
 # <span style="font-size: 2rem;">⚡ Quick Start</span>
 
 ### 1. Add your OpenAI API key  
-Open **Settings** and paste your API key (starts with `sk-`). TextBuddy uses this key to communicate with the AI.
+Open `Settings` and paste your API key (starts with `sk-`). TextBuddy uses this key to communicate with the AI.
 
 ### 2. Record your hotkeys  
-In the main window, choose **Inline** or **Popup**, then click **Record Hotkey** to assign shortcuts you can use from any app.
+In the main window, choose `Inline` or `Popup`, then click `Record Hotkey` to assign shortcuts you can use from any app.
 
-- **Inline** → replaces highlighted text directly  
-- **Popup** → shows a floating window for responses  
+- `Inline` → replaces highlighted text directly  
+- `Popup` → shows a floating window for responses  
 
 ### 3. Create your presets  
-Click **+ Add Preset**, give it a friendly name, and write the instructions you want TextBuddy to follow (translate, rewrite, summarize… anything).
+Click `+ Add Preset`, give it a friendly name, and write the instructions you want TextBuddy to follow (translate, rewrite, summarize… anything).
 
 # <span style="font-size: 2rem;">📝 Changelog</span>
 
