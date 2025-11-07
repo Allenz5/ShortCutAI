@@ -2,7 +2,7 @@
 
   <img src="electron/public/assets/floating/nerd.png" alt="GoBuddy" width="64" height="64">
 
-  # <span style="font-size: 3rem;">TextBuddy</span>
+  # <span style="font-size: 3rem;">GoBuddy</span>
 
   <p>Access AI faster, stay in your flow.</p>
 
@@ -18,7 +18,7 @@
 
 # <span style="font-size: 2rem;">📘 Introduction</span>
 
-TextBuddy is built to help you reach AI faster. We all have a few go-to prompts, and jumping out of your current page just to retype them in ChatGPT is pure torture. With one click, TextBuddy gives you what you need without breaking your focus.
+GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, and jumping out of your current page just to retype them in ChatGPT is pure torture. With one click, GoBuddy gives you what you need without breaking your focus.
 
 <div align="center">
 
@@ -43,7 +43,7 @@ TextBuddy is built to help you reach AI faster. We all have a few go-to prompts,
 # <span style="font-size: 2rem;">⚡ Quick Start</span>
 
 ### Add your OpenAI API key  
-Open `Settings` and paste your API key (starts with `sk-`). TextBuddy uses this key to communicate with the AI.
+Open `Settings` and paste your API key (starts with `sk-`). GoBuddy uses this key to communicate with the AI.
 
 ### Record your hotkeys  
 In the main window, choose `Inline` or `Popup`, then click `Record Hotkey` to assign shortcuts you can use from any app.
@@ -52,7 +52,7 @@ In the main window, choose `Inline` or `Popup`, then click `Record Hotkey` to as
 - `Popup` → shows a floating window for responses  
 
 ### Create your presets  
-Click `+ Add Preset`, give it a friendly name, and write the instructions you want TextBuddy to follow (translate, rewrite, summarize… anything).
+Click `+ Add Preset`, give it a friendly name, and write the instructions you want GoBuddy to follow (translate, rewrite, summarize… anything).
 
 # <span style="font-size: 2rem;">📝 Changelog</span>
 
