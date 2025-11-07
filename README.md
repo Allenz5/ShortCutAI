@@ -12,6 +12,13 @@
     <img src="https://img.shields.io/badge/Windows-Supported-0078D6?style=for-the-badge&logo=windows&logoColor=white" />
   </p>
 
+  <!-- Demo video (autoplay, loop, muted, no controls). GitHub may still allow click-to-pause/open. -->
+  <p>
+    <video src="assets/inline.mp4" width="860" autoplay loop muted playsinline>
+      Your browser does not support the video tag.
+    </video>
+  </p>
+
 </div>
 
 ---
