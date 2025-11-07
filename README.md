@@ -20,14 +20,16 @@
 
 TextBuddy is built to help you reach AI faster. We all have a few go-to prompts, and jumping out of your current page just to retype them in ChatGPT is pure torture. With one click, TextBuddy gives you what you need without breaking your focus.
 
-### Inline Shortcut (replace text in place)
 <p align="center">
-  <img src="assets/inline.gif" width="360" style="margin-top:-10px; margin-bottom:-10px;">
+  <img src="assets/inline.gif" width="360" style="margin-top:-10px; margin-bottom:-4px;">
+  <br>
+  <sub>Inline Shortcut (replace text in place)</sub>
 </p>
 
-### Popup Shortcut (show floating response)
 <p align="center">
-  <img src="assets/popup.gif" width="360" style="margin-top:-10px; margin-bottom:-10px;">
+  <img src="assets/popup.gif" width="360" style="margin-top:-10px; margin-bottom:-4px;">
+  <br>
+  <sub>Popup Shortcut (show floating response)</sub>
 </p>
 
 # <span style="font-size: 2rem;">⚡ Quick Start</span>
