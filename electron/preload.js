@@ -31,4 +31,6 @@ contextBridge.exposeInMainWorld('api', {
   setFloatingWindowIgnoreMouse: (ignore) => ipcRenderer.send('floating-window-ignore-mouse', !!ignore),
   openSettings: () => ipcRenderer.invoke('open-settings-window'),
   openLogs: () => ipcRenderer.invoke('open-logs-window'),
+  openTutorial: () => ipcRenderer.invoke('open-tutorial-window'),
+  markTutorialSeen: () => ipcRenderer.invoke('tutorial-mark-seen'),
 });

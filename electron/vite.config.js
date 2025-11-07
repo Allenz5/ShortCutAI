@@ -14,6 +14,7 @@ export default defineConfig({
         selector: path.resolve(__dirname, 'selector.html'),
         floating: path.resolve(__dirname, 'floating.html'),
         logs: path.resolve(__dirname, 'logs.html'),
+        tutorial: path.resolve(__dirname, 'tutorial.html'),
       },
     },
   },

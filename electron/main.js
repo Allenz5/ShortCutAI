@@ -182,23 +182,41 @@ function getAppIconImage() {
 }
 
 // Load or initialize config
+function defaultConfig() {
+  return { autoStart: true, apiKey: '', hasSeenTutorial: false };
+}
+
 function loadConfig() {
   try {
     if (fs.existsSync(configPath)) {
-      return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      const stored = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      return { ...defaultConfig(), ...stored };
     }
   } catch (error) {
     console.error('Error loading config:', error);
   }
-  return { autoStart: true, apiKey: '' };
+  return defaultConfig();
 }
 
 // Save config
 function saveConfig(config) {
   try {
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    const merged = { ...defaultConfig(), ...(config || {}) };
+    fs.writeFileSync(configPath, JSON.stringify(merged, null, 2));
   } catch (error) {
     console.error('Error saving config:', error);
+  }
+}
+
+function markTutorialSeen() {
+  try {
+    const cfg = loadConfig();
+    if (!cfg.hasSeenTutorial) {
+      cfg.hasSeenTutorial = true;
+      saveConfig(cfg);
+    }
+  } catch (error) {
+    console.error('Error marking tutorial as seen:', error);
   }
 }
 
@@ -315,6 +333,7 @@ let mainWindow;
 let settingsWindow;
 let selectorWindow;
 let logsWindow;
+let tutorialWindow;
 let currentHotkey;
 let currentSelectionHotkey;
 let tray;
@@ -1120,6 +1139,43 @@ function createLogsWindow() {
   });
 }
 
+function createTutorialWindow() {
+  if (tutorialWindow) {
+    tutorialWindow.focus();
+    return;
+  }
+
+  tutorialWindow = new BrowserWindow({
+    width: 760,
+    height: 640,
+    minWidth: 640,
+    minHeight: 520,
+    resizable: true,
+    title: 'Getting Started',
+    icon: getAppIconPath() || undefined,
+    autoHideMenuBar: true,
+    parent: mainWindow || undefined,
+    modal: false,
+    center: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  if (process.env.NODE_ENV === 'development') {
+    tutorialWindow.loadURL('http://localhost:3000/tutorial.html');
+  } else {
+    tutorialWindow.loadFile(path.join(__dirname, 'dist/tutorial.html'));
+  }
+
+  tutorialWindow.on('closed', () => {
+    tutorialWindow = null;
+  });
+  markTutorialSeen();
+}
+
 // IPC handlers
 ipcMain.handle('get-config', () => {
   return loadConfig();
@@ -1186,6 +1242,21 @@ ipcMain.handle('open-logs-window', () => {
   }
 });
 
+ipcMain.handle('open-tutorial-window', () => {
+  try {
+    createTutorialWindow();
+    return { success: true };
+  } catch (e) {
+    console.error('Failed to open tutorial window:', e);
+    return { success: false, error: e?.message || 'Unknown error' };
+  }
+});
+
+ipcMain.handle('tutorial-mark-seen', () => {
+  markTutorialSeen();
+  return { success: true };
+});
+
 ipcMain.handle('show-main-window', () => {
   if (mainWindow) {
     if (process.platform === 'darwin') {
@@ -1246,12 +1317,21 @@ app.whenReady().then(() => {
   ensureMacAccessibility();
   registerGlobalHotkey();
   createTray();
+  let startupConfig = defaultConfig();
+  try {
+    startupConfig = loadConfig();
+  } catch {}
   // Ensure login item points to the correct executable after installs/updates
-  try { configureAutoStart(loadConfig()); } catch {}
+  try { configureAutoStart(startupConfig); } catch {}
+  // Show tutorial once for first-time users
+  try {
+    if (!startupConfig?.hasSeenTutorial) {
+      createTutorialWindow();
+    }
+  } catch {}
   // If no OpenAI API key is configured, prompt user to open Settings on startup
   try {
-    const cfg = loadConfig();
-    const apiKey = (cfg && typeof cfg.apiKey === 'string') ? cfg.apiKey.trim() : '';
+    const apiKey = (startupConfig && typeof startupConfig.apiKey === 'string') ? startupConfig.apiKey.trim() : '';
     if (!apiKey) {
       createSettingsWindow();
     }

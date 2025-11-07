@@ -228,6 +228,7 @@ function InputField() {
         <div className="secondary-buttons">
           <button className="settings-btn" onClick={() => window.api?.openSettings?.()}>Settings</button>
           <button className="logs-btn" onClick={() => window.api?.openLogs?.()}>Logs</button>
+          <button className="tutorial-btn" onClick={() => window.api?.openTutorial?.()}>Tutorial</button>
         </div>
       </div>
 

@@ -118,7 +118,8 @@
   background: #F2F2F7;
 }
 
-.logs-btn {
+.logs-btn,
+.tutorial-btn {
   padding: 4px 6px;
   background: transparent;
   color: #8E8E93;
@@ -132,7 +133,8 @@
   margin-top: 8px;
 }
 
-.logs-btn:hover {
+.logs-btn:hover,
+.tutorial-btn:hover {
   color: #007AFF;
   background: transparent;
 }
