@@ -575,7 +575,13 @@ function registerGlobalHotkey() {
     if (ok) {
       currentHotkey = accelerator;
     } else {
-      console.warn(`Failed to register Inline hotkey "${inputHotkey}"`);
+      console.warn(`Failed to register Inline hotkey "${inputHotkey}" - setting to none`);
+      // Set hotkey to null in config to avoid retry
+      const cfg = loadInputFieldConfig();
+      if (cfg.general) {
+        cfg.general.hotkey = null;
+      }
+      saveInputFieldConfig(cfg);
       notifyHotkeyConflict('inline', inputHotkey);
     }
   }
@@ -636,7 +642,13 @@ function registerGlobalHotkey() {
     if (ok) {
       currentSelectionHotkey = accelerator;
     } else {
-      console.warn(`Failed to register Popup hotkey "${selectionHotkey}"`);
+      console.warn(`Failed to register Popup hotkey "${selectionHotkey}" - setting to none`);
+      // Set hotkey to null in config to avoid retry
+      const cfg = loadSelectionConfig();
+      if (cfg.general) {
+        cfg.general.hotkey = null;
+      }
+      saveSelectionConfig(cfg);
       notifyHotkeyConflict('popup', selectionHotkey);
     }
   }
