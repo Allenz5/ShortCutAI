@@ -8,7 +8,7 @@ const AutoLaunch = require('electron-auto-launch');
 const configPath = path.join(app.getPath('userData'), 'config.json');
 const inputFieldConfigPath = path.join(app.getPath('userData'), 'inputfield-config.json');
 const selectionConfigPath = path.join(app.getPath('userData'), 'selection-config.json');
-const logStorePath = path.join(app.getPath('userData'), 'textbuddy-logs.json');
+const logStorePath = path.join(app.getPath('userData'), 'gobuddy-logs.json');
 
 const startedHidden = determineHiddenStartup();
 
@@ -229,7 +229,7 @@ function getAutoLauncher() {
   if (appAutoLauncher) return appAutoLauncher;
   try {
     appAutoLauncher = new AutoLaunch({
-      name: 'TextBuddy',
+      name: 'GoBuddy',
       isHidden: true,
     });
   } catch (e) {
@@ -529,7 +529,7 @@ function registerGlobalHotkey() {
           console.error('No Inline presets configured');
           return;
         }
-        logInfo('[TextBuddy] Inline task started');
+        logInfo('[GoBuddy] Inline task started');
         const previousApp = process.platform === 'darwin' ? await getFrontmostAppMac() : null;
         const copyPromise = copySelectionText();
         const chosen = await showSelectorOverlay(profiles);
@@ -542,7 +542,7 @@ function registerGlobalHotkey() {
           selectedText = await copySelectionText();
         }
         if (!selectedText || selectedText.trim() === '') return;
-        console.log('[TextBuddy] Inline copied text:', selectedText);
+        console.log('[GoBuddy] Inline copied text:', selectedText);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
           floatingWindow.webContents.send('ai-processing', 'input');
         }
@@ -552,7 +552,7 @@ function registerGlobalHotkey() {
           floatingWindow.webContents.send('ai-processing', 'idle');
         }
         if (!result) return;
-        console.log('[TextBuddy] Inline GPT output:', result);
+        console.log('[GoBuddy] Inline GPT output:', result);
         if (process.platform === 'darwin' && previousApp) {
           await activateAppMac(previousApp);
           await sleep(150);
@@ -562,7 +562,7 @@ function registerGlobalHotkey() {
         if (process.platform === 'darwin' || process.platform === 'win32') {
           sendKeys('^v');
         }
-        logInfo('[TextBuddy] Inline task finished');
+        logInfo('[GoBuddy] Inline task finished');
       } catch (err) {
         console.error('Hotkey flow error:', err);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
@@ -599,7 +599,7 @@ function registerGlobalHotkey() {
           console.error('No Popup presets configured');
           return;
         }
-        logInfo('[TextBuddy] Popup task started');
+        logInfo('[GoBuddy] Popup task started');
         const previousApp = process.platform === 'darwin' ? await getFrontmostAppMac() : null;
         const copyPromise = copySelectionText();
         const chosen = await showSelectorOverlay(profiles);
@@ -612,7 +612,7 @@ function registerGlobalHotkey() {
           selectedText = await copySelectionText();
         }
         if (!selectedText || selectedText.trim() === '') return;
-        console.log('[TextBuddy] Popup copied text:', selectedText);
+        console.log('[GoBuddy] Popup copied text:', selectedText);
         if (floatingWindow && !floatingWindow.isDestroyed()) {
           floatingWindow.webContents.send('ai-processing', 'popup');
         }
@@ -622,13 +622,13 @@ function registerGlobalHotkey() {
           floatingWindow.webContents.send('ai-processing', 'idle');
         }
         if (!result) return;
-        console.log('[TextBuddy] Popup GPT output:', result);
+        console.log('[GoBuddy] Popup GPT output:', result);
         if (process.platform === 'darwin' && previousApp) {
           await activateAppMac(previousApp);
           await sleep(150);
         }
         showResultDialog(result);
-        logInfo('[TextBuddy] Popup task finished');
+        logInfo('[GoBuddy] Popup task finished');
         // Do not set clipboard or paste here
       } catch (err) {
         console.error('Popup Hotkey flow error:', err);
@@ -895,7 +895,7 @@ function createTray() {
   if (process.platform === 'darwin' && icon.isEmpty && icon.isEmpty()) {
     try { tray.setTitle('AI'); } catch {}
   }
-  tray.setToolTip('TextBuddy');
+  tray.setToolTip('GoBuddy');
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -1113,9 +1113,9 @@ function ensureMacAccessibility() {
         buttons: ['Open System Settings', 'Later'],
         defaultId: 0,
         cancelId: 1,
-        title: 'Enable Accessibility for TextBuddy',
-        message: 'TextBuddy needs Accessibility permission to read selections and paste results.',
-        detail: 'Go to System Settings → Privacy & Security → Accessibility and enable TextBuddy.',
+        title: 'Enable Accessibility for GoBuddy',
+        message: 'GoBuddy needs Accessibility permission to read selections and paste results.',
+        detail: 'Go to System Settings → Privacy & Security → Accessibility and enable GoBuddy.',
       }).then((res) => {
         if (res.response === 0) {
           try { shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'); } catch {}

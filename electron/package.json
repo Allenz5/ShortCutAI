@@ -1,5 +1,5 @@
 {
-  "name": "textbuddy",
+  "name": "gobuddy",
   "version": "1.0.0",
   "description": "",
   "main": "main.js",
@@ -28,8 +28,8 @@
     "react-dom": "^19.2.0"
   },
   "build": {
-    "appId": "com.textbuddy.app",
-    "productName": "TextBuddy",
+    "appId": "com.gobuddy.app",
+    "productName": "GoBuddy",
     "files": [
       "dist/**/*",
       "main.js",

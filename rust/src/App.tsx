@@ -10,7 +10,7 @@ const inputIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' 
 const cursorIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E";
 const plusIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='5' x2='12' y2='19'/%3E%3Cline x1='5' y1='12' x2='19' y2='12'/%3E%3C/svg%3E";
 
-const STORAGE_KEY = "shortcutai_profiles_v1";
+const STORAGE_KEY = "gobuddy_profiles_v1";
 
 type View = "screenshot" | "inputField" | "selection";
 const allViews: View[] = ["screenshot", "inputField", "selection"];
@@ -397,7 +397,7 @@ function App() {
           }
 
           window.dispatchEvent(
-            new CustomEvent("shortcutai:screenshot-triggered", {
+            new CustomEvent("gobuddy:screenshot-triggered", {
               detail: event,
             }),
           );
@@ -591,7 +591,7 @@ function App() {
     <div className="settings-panel">
       <h1>Settings</h1>
       <p className="settings-description">
-        Customize how ShortCutAI behaves when the application launches.
+        Customize how GoBuddy behaves when the application launches.
       </p>
 
       <div className="settings-group">

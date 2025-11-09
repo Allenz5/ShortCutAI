@@ -28,7 +28,7 @@ function Tutorial() {
   return (
     <div className="tutorial-container">
       <header>
-        <h1>Welcome to TextBuddy</h1>
+        <h1>Welcome to GoBuddy</h1>
         <p>Follow these three quick steps and you’ll be rewriting text like a pro.</p>
       </header>
 
@@ -42,7 +42,7 @@ function Tutorial() {
             </button>
           }
         >
-          Open Settings and paste your OpenAI key (starts with “sk-”). TextBuddy uses this to talk to the AI.
+          Open Settings and paste your OpenAI key (starts with “sk-”). GoBuddy uses this to talk to the AI.
         </Step>
 
         <Step
@@ -62,7 +62,7 @@ function Tutorial() {
           number="3"
           title="Create your presets"
         >
-          Select “+ Add Preset”, give it a friendly name, and write the instructions you want TextBuddy to follow (translate, fix tone, summarize, etc.).
+          Select “+ Add Preset”, give it a friendly name, and write the instructions you want GoBuddy to follow (translate, fix tone, summarize, etc.).
         </Step>
       </div>
 

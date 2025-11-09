@@ -58,7 +58,7 @@ function Logs() {
       <header className="logs-header">
         <div>
           <h1>Diagnostics</h1>
-          <p>Recent fatal, error, warning, and info entries from TextBuddy.</p>
+          <p>Recent fatal, error, warning, and info entries from GoBuddy.</p>
         </div>
         <div className="logs-actions">
           <select

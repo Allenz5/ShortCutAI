@@ -75,7 +75,7 @@ function InputField() {
       setGeneralConfig(config.general || { hotkey: '' });
     } catch (error) {
       console.error('Error loading Inline config:', error);
-      alert('Failed to load Inline configuration. Please restart TextBuddy.');
+      alert('Failed to load Inline configuration. Please restart GoBuddy.');
     }
   };
 
