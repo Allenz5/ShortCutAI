@@ -49,7 +49,7 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
 
 # <span style="font-size: 2rem;">⚡ Quick Start</span>
 
-### Authorization
+### 1. Authorization
 
 - If you see the message `your system couldn't verify GoBuddy` the first time you open it:
 
@@ -68,7 +68,7 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
 
 ---
 
-### Add Your OpenAI API Key
+### 2. Add Your OpenAI API Key
 
 - Open `Settings`  
 - Paste your API key (starts with `sk-`)  
@@ -76,7 +76,7 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
 
 ---
 
-### Record Your Hotkeys
+### 3. Record Your Hotkeys
 
 - In the main window, choose a shortcut type  
   - `Inline` replaces your highlighted text directly  
@@ -86,7 +86,7 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
 
 ---
 
-### Create Your Presets
+### 4. Create Your Presets
 
 - Click `+ Add Preset`  
 - Name your preset  
