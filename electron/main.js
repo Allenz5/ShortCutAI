@@ -245,6 +245,37 @@ function configureAutoStart(config) {
       return;
     }
     const wantAutoStart = !!config?.autoStart;
+
+    // Prefer Electron's built-in login item settings on Windows only
+    if (process.platform === 'win32') {
+      try {
+        app.setLoginItemSettings({
+          openAtLogin: wantAutoStart,
+          // Ensure correct executable path for installed builds
+          path: process.execPath,
+          // Pass flag so we can start hidden on boot
+          args: wantAutoStart ? ['--hidden'] : [],
+        });
+      } catch (e) {
+        console.error('setLoginItemSettings error:', e);
+      }
+
+      // Also ensure third-party auto-launch entry is not duplicating on Windows
+      const launcher = getAutoLauncher();
+      if (launcher) {
+        launcher.isEnabled().then((enabled) => {
+          if (enabled && wantAutoStart) {
+            // We rely on built-in login items; disable library entry to avoid duplicates
+            launcher.disable().catch((e) => console.error('AutoLaunch disable (dup-prevent) error:', e));
+          } else if (!wantAutoStart && enabled) {
+            launcher.disable().catch((e) => console.error('AutoLaunch disable error:', e));
+          }
+        }).catch((e) => console.error('AutoLaunch isEnabled error:', e));
+      }
+      return;
+    }
+
+    // Fallback (e.g., macOS/Linux): use electron-auto-launch
     const launcher = getAutoLauncher();
     if (!launcher) return;
     launcher.isEnabled().then((enabled) => {
