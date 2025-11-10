@@ -7,14 +7,22 @@
   <p>Access AI faster, stay in your flow.</p>
 
   <p align="center">
-    <img src="https://img.shields.io/badge/Discord-Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" />
+    <!-- Discord -->
+    <a href="YOUR_DISCORD_INVITE_LINK">
+      <img src="https://img.shields.io/badge/Discord-Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" />
+    </a>
+  
+    <!-- macOS -->
     <a href="https://github.com/Allenz5/GoBuddy/releases/download/v1.0.0/GoBuddy.Setup.Mac.V1.dmg">
       <img src="https://img.shields.io/badge/Mac-Download-000000?style=for-the-badge&logo=apple&logoColor=white" />
     </a>
+  
+    <!-- Windows -->
     <a href="https://github.com/Allenz5/GoBuddy/releases/download/v1.0.0/GoBuddy.Setup.Windows.V1.exe">
       <img src="https://img.shields.io/badge/Windows-Download-0078D6?style=for-the-badge&logo=windows&logoColor=white" />
     </a>
   </p>
+
 
 
 
@@ -71,7 +79,7 @@ Click `+ Add Preset`, give it a friendly name, and write the instructions you wa
 # <span style="font-size: 2rem;">🛠️ Troubleshooting</span>
 
 <p align="left">
-  <a href="">
+  <a href="YOUR_DISCORD_INVITE_LINK">
     <img src="https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=for-the-badge&logo=discord&logoColor=white"/>
   </a>
 </p>
