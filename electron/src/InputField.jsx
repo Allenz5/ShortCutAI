@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './InputField.css';
 import { usePopup } from './Popup';
 
@@ -148,9 +148,27 @@ function InputField() {
     setGeneralConfig({ ...generalConfig, [field]: value });
   };
 
-  const handleStartRecording = () => {
+  const stopRecording = useCallback(async () => {
+    setIsRecording(false);
+    
+    // Resume global hotkeys after recording
+    try {
+      await window.api.resumeGlobalHotkeys();
+    } catch (e) {
+      console.error('Failed to resume global hotkeys:', e);
+    }
+  }, []);
+
+  const handleStartRecording = async () => {
     setHotkeyError('');
     setIsRecording(true);
+    
+    // Pause global hotkeys during recording
+    try {
+      await window.api.pauseGlobalHotkeys();
+    } catch (e) {
+      console.error('Failed to pause global hotkeys:', e);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -161,7 +179,7 @@ function InputField() {
 
     // Allow Escape to cancel recording
     if (e.key === 'Escape') {
-      setIsRecording(false);
+      stopRecording();
       return;
     }
 
@@ -182,7 +200,7 @@ function InputField() {
     // Convert key to more readable format resilient to Option/Alt combos
     key = getKeyFromEvent(e);
     if (!key) {
-      setIsRecording(false);
+      stopRecording();
       return;
     }
 
@@ -192,7 +210,7 @@ function InputField() {
     const reservedCombos = new Set(['ctrl+c', 'meta+c', 'ctrl+v', 'meta+v']);
     if (reservedCombos.has(normalized)) {
       setHotkeyError(`"${hotkeyString}" is reserved for system copy/paste. Please choose a different shortcut.`);
-      setIsRecording(false);
+      stopRecording();
       return;
     }
 
@@ -201,31 +219,48 @@ function InputField() {
     if (otherHotkey && hotkeyString === otherHotkey) {
       const otherLabel = isInline ? 'Popup' : 'Inline';
       setHotkeyError(`"${hotkeyString}" is already used by the ${otherLabel} shortcut.`);
-      setIsRecording(false);
+      stopRecording();
       return;
     }
 
     // Update currently active section's general config
     handleSectionGeneralConfigUpdate('hotkey', hotkeyString);
     setHotkeyError('');
-    setIsRecording(false);
+    stopRecording();
   };
+
+  const handleMouseClick = useCallback((e) => {
+    if (!isRecording) return;
+    
+    // Left click (button 0) exits recording
+    if (e.button === 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      stopRecording();
+    }
+  }, [isRecording, stopRecording]);
 
   useEffect(() => {
     if (isRecording) {
       window.addEventListener('keydown', handleKeyDown, true);
+      window.addEventListener('mousedown', handleMouseClick, true);
       return () => {
         window.removeEventListener('keydown', handleKeyDown, true);
+        window.removeEventListener('mousedown', handleMouseClick, true);
       };
     }
-  }, [isRecording, handleKeyDown]);
+  }, [isRecording, handleKeyDown, handleMouseClick]);
 
   // Add this new useEffect:
   useEffect(() => {
-    // Cleanup recording state on unmount
+    // Cleanup recording state on unmount and resume hotkeys
     return () => {
       if (isRecording) {
         setIsRecording(false);
+        // Resume global hotkeys if component unmounts while recording
+        window.api.resumeGlobalHotkeys().catch(e => {
+          console.error('Failed to resume global hotkeys on unmount:', e);
+        });
       }
     };
   }, [isRecording]);
@@ -385,7 +420,7 @@ function InputField() {
                   </div>
                 )}
                 <small className="help-text">
-                  Click "Record Hotkey" and press your desired key combination
+                  Click "Record Hotkey" and press your desired key combination (ESC or click to cancel)
                 </small>
               </div>
             </>

@@ -40,4 +40,6 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('hotkey-conflict', listener);
     return () => ipcRenderer.removeListener('hotkey-conflict', listener);
   },
+  pauseGlobalHotkeys: () => ipcRenderer.invoke('pause-global-hotkeys'),
+  resumeGlobalHotkeys: () => ipcRenderer.invoke('resume-global-hotkeys'),
 });

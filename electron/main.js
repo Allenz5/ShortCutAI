@@ -4,6 +4,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 let OpenAI;
 const AutoLaunch = require('electron-auto-launch');
+const { uIOhook, UiohookKey } = require('uiohook-napi');
 
 const configPath = path.join(app.getPath('userData'), 'config.json');
 const inputFieldConfigPath = path.join(app.getPath('userData'), 'inputfield-config.json');
@@ -374,6 +375,8 @@ let inlineHotkeyExecuting = false;
 let popupHotkeyExecuting = false;
 let tray;
 let isQuitting = false;
+let uiohookStarted = false;
+let globalHotkeysPaused = false;
 
 function sendKeys(keys) {
   try {
@@ -521,7 +524,39 @@ function notifyHotkeyConflict(target, hotkey) {
   }
 }
 
+function pauseGlobalHotkeys() {
+  if (globalHotkeysPaused) return;
+  globalHotkeysPaused = true;
+  
+  // Unregister current hotkeys temporarily
+  if (currentHotkey) {
+    try {
+      globalShortcut.unregister(currentHotkey);
+    } catch (e) {
+      console.error('Error unregistering inline hotkey:', e);
+    }
+  }
+  if (currentSelectionHotkey) {
+    try {
+      globalShortcut.unregister(currentSelectionHotkey);
+    } catch (e) {
+      console.error('Error unregistering popup hotkey:', e);
+    }
+  }
+}
+
+function resumeGlobalHotkeys() {
+  if (!globalHotkeysPaused) return;
+  globalHotkeysPaused = false;
+  
+  // Re-register hotkeys
+  registerGlobalHotkey();
+}
+
 function registerGlobalHotkey() {
+  // Skip if hotkeys are paused (during recording)
+  if (globalHotkeysPaused) return;
+  
   const inputCfg = loadInputFieldConfig();
   const selectionCfg = loadSelectionConfig();
   const inputHotkey = inputCfg?.general?.hotkey;
@@ -755,6 +790,8 @@ function showSelectorOverlay(profiles) {
     const channel = `selector-chosen:${token}`;
     let done = false;
     const registeredKeys = [];
+    let selectorMouseClickHandler = null;
+    
     const unregisterSelectorShortcuts = () => {
       for (const k of registeredKeys) {
         try { globalShortcut.unregister(k); } catch {}
@@ -783,6 +820,15 @@ function showSelectorOverlay(profiles) {
     const cleanup = () => {
       ipcMain.removeAllListeners(channel);
       unregisterSelectorShortcuts();
+      // Clean up mouse click listener
+      if (selectorMouseClickHandler) {
+        try {
+          uIOhook.off('click', selectorMouseClickHandler);
+        } catch (err) {
+          console.error('Failed to remove selector click handler in cleanup:', err);
+        }
+        selectorMouseClickHandler = null;
+      }
       if (selectorWindow) {
         try { selectorWindow.close(); } catch {}
         selectorWindow = null;
@@ -792,11 +838,22 @@ function showSelectorOverlay(profiles) {
       cleanup();
       resolve(index);
     });
+    
     selectorWindow.on('closed', () => {
       selectorWindow = null;
       unregisterSelectorShortcuts();
+      // Clean up mouse click listener
+      if (selectorMouseClickHandler) {
+        try {
+          uIOhook.off('click', selectorMouseClickHandler);
+        } catch (err) {
+          console.error('Failed to remove selector click handler:', err);
+        }
+        selectorMouseClickHandler = null;
+      }
       if (!done) resolve(null);
     });
+    
     selectorWindow.webContents.on('did-finish-load', () => {
       // Wait for window to be fully ready
       const sendData = () => {
@@ -819,6 +876,57 @@ function showSelectorOverlay(profiles) {
         // Show window only after data is sent
         if (selectorWindow && !selectorWindow.isDestroyed()) {
           selectorWindow.show();
+          
+          // Setup click-outside-to-close for selector
+          // Use mousedown instead of click to avoid interfering with DOM click events
+          setTimeout(() => {
+            try {
+              selectorMouseClickHandler = (e) => {
+                try {
+                  // Only handle left mouse button
+                  if (e.button !== 1) return; // button 1 is left click in uiohook-napi
+                  
+                  if (selectorWindow && !selectorWindow.isDestroyed()) {
+                    const bounds = selectorWindow.getBounds();
+                    const clickX = e.x;
+                    const clickY = e.y;
+                    
+                    // Check if click is outside window bounds (with small buffer for edges)
+                    const buffer = 5;
+                    const isOutside = clickX < bounds.x - buffer || 
+                                     clickX > bounds.x + bounds.width + buffer ||
+                                     clickY < bounds.y - buffer || 
+                                     clickY > bounds.y + bounds.height + buffer;
+                    
+                    if (isOutside) {
+                      // Small delay to ensure React onClick has a chance to fire first
+                      setTimeout(() => {
+                        if (selectorWindow && !selectorWindow.isDestroyed()) {
+                          chooseAndClose(-1);
+                        }
+                      }, 50);
+                    }
+                  }
+                } catch (err) {
+                  console.error('Error in selector click handler:', err);
+                }
+              };
+              
+              uIOhook.on('click', selectorMouseClickHandler);
+              
+              // Start the hook if not already running
+              if (!uiohookStarted) {
+                try {
+                  uIOhook.start();
+                  uiohookStarted = true;
+                } catch (err) {
+                  console.error('Failed to start uiohook:', err);
+                }
+              }
+            } catch (err) {
+              console.error('Failed to setup selector click outside handler:', err);
+            }
+          }, 200);
         }
       }, 150);
     });
@@ -888,7 +996,14 @@ function showResultDialog(resultText) {
     <div class='dialog'>
       <div class='result'>${resultText.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
     </div>
-    <script>document.body.focus();document.body.onkeydown=e=>{if(e.key==='Escape'){window.close();}};document.body.onclick=()=>window.close();</script>
+    <script>
+      document.body.focus();
+      document.body.onkeydown = e => {
+        if (e.key === 'Escape') {
+          window.close();
+        }
+      };
+    </script>
   </body></html>`;
 
   const win = new BrowserWindow({
@@ -910,8 +1025,79 @@ function showResultDialog(resultText) {
     },
   });
   win.loadURL('data:text/html;charset=UTF-8,' + encodeURIComponent(html));
-  win.once('ready-to-show', () => win.show());
+  
+  // Setup click-outside-to-close using uiohook-napi
+  let mouseClickHandler = null;
+  
+  win.once('ready-to-show', () => {
+    win.show();
+    
+    // Start listening for global mouse clicks after a short delay to avoid immediate closure
+    setTimeout(() => {
+      try {
+        mouseClickHandler = (e) => {
+          try {
+            // Only handle left mouse button clicks
+            if (e.button !== 1) return; // button 1 is left click in uiohook-napi
+            
+            if (win && !win.isDestroyed()) {
+              const bounds = win.getBounds();
+              const clickX = e.x;
+              const clickY = e.y;
+              
+              // Check if click is outside window bounds (with small buffer)
+              const buffer = 5;
+              const isOutside = clickX < bounds.x - buffer || 
+                               clickX > bounds.x + bounds.width + buffer ||
+                               clickY < bounds.y - buffer || 
+                               clickY > bounds.y + bounds.height + buffer;
+              
+              if (isOutside) {
+                // Small delay to ensure DOM events are processed first
+                setTimeout(() => {
+                  try { 
+                    if (win && !win.isDestroyed()) {
+                      win.close(); 
+                    }
+                  } catch {}
+                }, 50);
+              }
+            }
+          } catch (err) {
+            console.error('Error in mouse click handler:', err);
+          }
+        };
+        
+        uIOhook.on('click', mouseClickHandler);
+        
+        // Start the hook if not already running
+        if (!uiohookStarted) {
+          try {
+            uIOhook.start();
+            uiohookStarted = true;
+          } catch (err) {
+            console.error('Failed to start uiohook:', err);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to setup click outside handler:', err);
+      }
+    }, 200);
+  });
+  
   win.on('blur', () => { try { win.close(); } catch {} });
+  
+  win.on('closed', () => {
+    // Clean up mouse click listener
+    if (mouseClickHandler) {
+      try {
+        uIOhook.off('click', mouseClickHandler);
+      } catch (err) {
+        console.error('Failed to remove click handler:', err);
+      }
+      mouseClickHandler = null;
+    }
+  });
 }
 
 function createTray() {
@@ -1367,6 +1553,26 @@ ipcMain.handle('show-main-window', () => {
   return { success: true };
 });
 
+ipcMain.handle('pause-global-hotkeys', () => {
+  try {
+    pauseGlobalHotkeys();
+    return { success: true };
+  } catch (e) {
+    console.error('Failed to pause global hotkeys:', e);
+    return { success: false, error: e?.message || 'Unknown error' };
+  }
+});
+
+ipcMain.handle('resume-global-hotkeys', () => {
+  try {
+    resumeGlobalHotkeys();
+    return { success: true };
+  } catch (e) {
+    console.error('Failed to resume global hotkeys:', e);
+    return { success: false, error: e?.message || 'Unknown error' };
+  }
+});
+
 ipcMain.handle('floating-window-get-bounds', () => {
   try {
     if (!floatingWindow || floatingWindow.isDestroyed()) return null;
@@ -1447,6 +1653,15 @@ app.whenReady().then(() => {
 
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
+  
+  // Stop uiohook if it's running
+  if (uiohookStarted) {
+    try {
+      uIOhook.stop();
+    } catch (err) {
+      console.error('Failed to stop uiohook:', err);
+    }
+  }
 });
 
 app.on('window-all-closed', () => {
