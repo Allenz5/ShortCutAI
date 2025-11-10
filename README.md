@@ -16,7 +16,7 @@
     <a href="https://github.com/Allenz5/GoBuddy/releases/download/v1.0.0/GoBuddy.Windows.1.0.0.exe">
       <img src="https://img.shields.io/badge/Windows-Download-0078D6?style=for-the-badge&logo=windows&logoColor=white">
     </a>
-    <img src="https://img.shields.io/github/downloads/Allenz5/GoBuddy/v1.0.0/total?style=flat-square&logo=github&label=Total%20Downloads&cacheSeconds=300">
+    <img src="https://img.shields.io/github/downloads/Allenz5/GoBuddy/v1.0.0/total?style=for-the-badge&logo=github&label=Total%20Downloads&cacheSeconds=300">
   </p>
 </div>
 
