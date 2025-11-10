@@ -8,6 +8,7 @@
 
   <p>
     <img src="https://img.shields.io/badge/Discord-Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" />
+    
     <a href="https://github.com/USER/REPO/releases/download/v1.0.0/MyApp-mac.dmg](https://github.com/Allenz5/GoBuddy/releases/download/v1.0.0/GoBuddy.Setup.Mac.V1.dmg">
       <img src="https://img.shields.io/badge/Mac-Download-000000?style=for-the-badge&logo=apple&logoColor=white" />
     </a>
