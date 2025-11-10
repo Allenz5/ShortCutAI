@@ -10,10 +10,10 @@
     <a href="https://discord.gg/bNgZwZSBrR">
       <img src="https://img.shields.io/badge/Discord-Community-5865F2?style=for-the-badge&logo=discord&logoColor=white">
     </a>
-    <a href="https://github.com/Allenz5/GoBuddy/releases/download/v1.0.0/GoBuddy.Mac.V1.zip">
+    <a href="https://github.com/Allenz5/GoBuddy/releases/download/v1.0.0/GoBuddy.Mac.1.0.0.zip">
       <img src="https://img.shields.io/badge/Mac-Download-000000?style=for-the-badge&logo=apple&logoColor=white">
     </a>
-    <a href="https://github.com/Allenz5/GoBuddy/releases/download/v1.0.0/GoBuddy.Windows.V1.exe">
+    <a href="https://github.com/Allenz5/GoBuddy/releases/download/v1.0.0/GoBuddy.Windows.1.0.0.exe">
       <img src="https://img.shields.io/badge/Windows-Download-0078D6?style=for-the-badge&logo=windows&logoColor=white">
     </a>
   </p>
