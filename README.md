@@ -2,29 +2,24 @@
 
   <img src="electron/public/assets/floating/nerd.png" alt="GoBuddy" width="64" height="64">
 
-  # <span style="font-size: 3rem;">GoBuddy</span>
+  <h1 style="font-size: 3rem; margin: 0;">GoBuddy</h1>
 
   <p>Access AI faster, stay in your flow.</p>
 
-  <p align="center">
+  <p>
     <a href="YOUR_DISCORD_INVITE_LINK">
       <img src="https://img.shields.io/badge/Discord-Community-5865F2?style=for-the-badge&logo=discord&logoColor=white">
     </a>
-  </p>
-  
-  <p align="center">
     <a href="https://github.com/Allenz5/GoBuddy/releases/download/v1.0.0/GoBuddy.Setup.Mac.V1.dmg">
       <img src="https://img.shields.io/badge/Mac-Download-000000?style=for-the-badge&logo=apple&logoColor=white">
     </a>
-  </p>
-  
-  <p align="center">
     <a href="https://github.com/Allenz5/GoBuddy/releases/download/v1.0.0/GoBuddy.Setup.Windows.V1.exe">
       <img src="https://img.shields.io/badge/Windows-Download-0078D6?style=for-the-badge&logo=windows&logoColor=white">
     </a>
   </p>
 
 </div>
+
 
 ---
 
