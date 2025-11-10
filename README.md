@@ -18,6 +18,9 @@
     </a>
   </p>
 
+   <p>
+    <img src="https://img.shields.io/github/downloads/Allenz5/GoBuddy/total?style=flat-square&logo=github&label=Total%20Downloads&color=555">
+  </p>
 </div>
 
 
