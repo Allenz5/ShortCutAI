@@ -66,17 +66,33 @@ If you see a warning saying `your system couldn't verify GoBuddy` the first time
 
 GoBuddy is safe to use. We’re currently completing the official developer verification process for both macOS and Windows.
 
-### Add your OpenAI API key  
-Open `Settings` and paste your API key (starts with `sk-`). GoBuddy uses this key to communicate with the AI.
+### Add Your OpenAI API Key
 
-### Record your hotkeys  
-In the main window, choose `Inline` or `Popup`, then click `Record Hotkey` to assign shortcuts you can use from any app.
+GoBuddy needs your API key to connect with the AI. To set it up:
 
-- `Inline` → replaces highlighted text directly  
-- `Popup` → shows a floating window for responses  
+- Open **Settings**
+- Paste your API key (it starts with `sk-`)
 
-### Create your presets  
-Click `+ Add Preset`, give it a friendly name, and write the instructions you want GoBuddy to follow (translate, rewrite, summarize… anything).
+### Record Your Hotkeys
+
+Set shortcuts you can trigger from any app:
+
+- In the main window, choose **Inline** or **Popup**
+- Click **Record Hotkey** and press the keys you want to use
+
+**Inline**  
+- Replaces your highlighted text directly
+
+**Popup**  
+- Shows a floating response window
+
+### Create Your Presets
+
+Customize GoBuddy to your workflow:
+
+- Click **+ Add Preset**
+- Give it a name
+- Write the instructions you want GoBuddy to follow (translate, rewrite, summarize, etc.)
 
 # <span style="font-size: 2rem;">📝 Changelog</span>
 
