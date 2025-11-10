@@ -51,7 +51,7 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
 
 ### 1. Authorization
 
-- If you see the message `your system couldn't verify GoBuddy` the first time you open it:
+- If you see the message `your system couldn't verify GoBuddy` the first time you open it, rest assured that GoBuddy is safe to use.
 
 - Windows
   - Click `More Info`  
@@ -63,8 +63,6 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
   - In Tips, choose `Open Privacy & Security settings for me`  
   - Scroll to `“GoBuddy was blocked to protect your Mac”`  
   - Click `Open Anyway`
-
-- GoBuddy is safe to use. We’re completing the official developer verification for macOS and Windows.
 
 ---
 
