@@ -126,22 +126,15 @@ loadPersistedLogs();
 
 function determineHiddenStartup() {
   try {
-    if (process.platform === 'darwin') {
-      const loginSettings = app.getLoginItemSettings();
-      if (loginSettings?.wasOpenedAtLogin || loginSettings?.wasOpenedAsHidden) {
-        return true;
-      }
-    } else if (process.platform === 'win32') {
+    // Check for explicit --hidden flag only
+    // Auto-start on login should show the window
+    if (process.platform === 'win32') {
       const argMatches = process.argv.some((arg) => {
         if (!arg) return false;
         const lower = String(arg).toLowerCase();
         return lower === '--hidden' || lower.includes('--hidden');
       });
       if (argMatches) return true;
-      try {
-        const loginSettings = app.getLoginItemSettings?.();
-        if (loginSettings?.wasOpenedAtLogin) return true;
-      } catch {}
     }
   } catch {}
   return false;
@@ -231,7 +224,7 @@ function getAutoLauncher() {
   try {
     appAutoLauncher = new AutoLaunch({
       name: 'GoBuddy',
-      isHidden: true,
+      isHidden: false, // Show main window on auto-start
     });
   } catch (e) {
     console.error('Failed to init AutoLaunch:', e);
@@ -254,8 +247,8 @@ function configureAutoStart(config) {
           openAtLogin: wantAutoStart,
           // Ensure correct executable path for installed builds
           path: process.execPath,
-          // Pass flag so we can start hidden on boot
-          args: wantAutoStart ? ['--hidden'] : [],
+          // No hidden flag - show main window on auto-start
+          args: [],
         });
       } catch (e) {
         console.error('setLoginItemSettings error:', e);
@@ -1636,16 +1629,8 @@ app.whenReady().then(() => {
       createTutorialWindow();
     }
   } catch {}
-  try {
-    if (!startedHidden && app.isPackaged && process.platform === 'darwin') {
-      const st = app.getLoginItemSettings();
-      if (st?.openAtLogin && mainWindow) {
-        try { app.dock.show(); } catch {}
-        mainWindow.show();
-        mainWindow.focus();
-      }
-    }
-  } catch {}
+  // Window is now always created and shown on auto-start
+  // No special handling needed for login startup
   app.on('activate', () => {
     showMainWindow();
   });
