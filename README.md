@@ -64,7 +64,6 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
   - Scroll to `“GoBuddy was blocked to protect your Mac”`  
   - Click `Open Anyway`
 
----
 
 ### 2. Add Your OpenAI API Key
 
@@ -72,7 +71,6 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
 - Paste your API key (starts with `sk-`)  
 - This key lets GoBuddy connect to the AI
 
----
 
 ### 3. Record Your Hotkeys
 
@@ -82,7 +80,6 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
 - Click `Record Hotkey` and press your shortcut  
 - Hotkeys work from any app
 
----
 
 ### 4. Create Your Presets
 
