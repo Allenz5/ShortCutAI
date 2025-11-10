@@ -49,6 +49,23 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
 
 # <span style="font-size: 2rem;">⚡ Quick Start</span>
 
+### Authorization
+
+If you see a warning saying `your system couldn't verify GoBuddy` the first time you open it, follow the steps below:
+
+**Windows**  
+- Click `More Info`
+- Select `Run Anyway`
+
+**macOS**  
+- Click the `question-mark icon` in the top-right to open Tips  
+- Press `Done`  
+- In the Tips panel, choose `Open Privacy & Security settings for me`  
+- Scroll down to `“GoBuddy was blocked to protect your Mac”`  
+- Click `Open Anyway`
+
+GoBuddy is safe to use. We’re currently completing the official developer verification process for both macOS and Windows.
+
 ### Add your OpenAI API key  
 Open `Settings` and paste your API key (starts with `sk-`). GoBuddy uses this key to communicate with the AI.
 
