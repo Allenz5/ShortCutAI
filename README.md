@@ -68,7 +68,7 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
 ### 2. Add Your OpenAI API Key
 
 - Open `Settings`  
-- Paste your API key (starts with `sk-`)  
+- Paste your OpenAI API key (starts with `sk-`)  
 - This key lets GoBuddy connect to the AI
 
 
