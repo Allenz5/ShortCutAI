@@ -60,7 +60,9 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
   - Select `Done`  
   - In Tips, choose `Open Privacy & Security settings for me`  
   - Scroll to `“GoBuddy was blocked to protect your Mac”`  
-  - Click `Open Anyway`
+  - Click `Open Anyway`, then open GoBuddy
+  - GoBuddy requests Accessibility permission; click `Open System Settings`
+  - Toggle the switch next to GoBuddy
 
 
 ### 2. Add Your OpenAI API Key
