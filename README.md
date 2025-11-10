@@ -51,44 +51,47 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
 
 ### Authorization
 
-If you see a warning saying `your system couldn't verify GoBuddy` the first time you open it, follow the steps below:
+If you see the message `your system couldn't verify GoBuddy` the first time you open it:
 
 **Windows**  
-- Click `More Info`
-- Select `Run Anyway`
+- Click **More Info**  
+- Click **Run Anyway**
 
 **macOS**  
-- Click the `question-mark icon` in the top-right to open Tips  
-- Press `Done`  
-- In the Tips panel, choose `Open Privacy & Security settings for me`  
-- Scroll down to `“GoBuddy was blocked to protect your Mac”`  
-- Click `Open Anyway`
+- Click the **question-mark icon** in the top-right to open Tips  
+- Select **Done**  
+- In Tips, choose **Open Privacy & Security settings for me**  
+- Scroll to **“GoBuddy was blocked to protect your Mac”**  
+- Click **Open Anyway**
 
-GoBuddy is safe to use. We’re currently completing the official developer verification process for both macOS and Windows.
+GoBuddy is safe to use. We’re completing the official developer verification for macOS and Windows.
+
+---
 
 ### Add Your OpenAI API Key
 
-- Open **Settings**
-- Paste your API key (it starts with `sk-`)
-- GoBuddy needs your API key to connect with the AI
+- Open **Settings**  
+- Paste your API key (starts with `sk-`)  
+- This key lets GoBuddy connect to the AI
+
+---
 
 ### Record Your Hotkeys
 
-- In the main window, choose **Inline** or **Popup**
-- Click **Record Hotkey** and press the keys you want to use
-- You can trigger GoBuddy from any app using hotkeys
+- In the main window, choose a shortcut type  
+  - **Inline** replaces your highlighted text directly  
+  - **Popup** shows a floating response window  
+- Click **Record Hotkey** and press your shortcut  
+- Hotkeys work from any app
 
-**Inline**  
-- Replaces your highlighted text directly
-
-**Popup**  
-- Shows a floating response window
+---
 
 ### Create Your Presets
 
-- Click **+ Add Preset**
-- Give it a name
-- Write the instructions you want GoBuddy to follow (translate, rewrite, summarize, etc.)
+- Click **+ Add Preset**  
+- Name your preset  
+- Add the instructions you want GoBuddy to follow (translate, rewrite, summarize, etc.)
+
 
 # <span style="font-size: 2rem;">📝 Changelog</span>
 
