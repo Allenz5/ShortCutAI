@@ -53,16 +53,16 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
 
 - If you see the message `your system couldn't verify GoBuddy` the first time you open it:
 
-- **Windows**  
-  - Click **More Info**  
-  - Click **Run Anyway**
+- Windows
+  - Click `More Info`  
+  - Click `Run Anyway`
 
-- **macOS**
-  - Click the **question-mark icon** in the top-right to open Tips  
-  - Select **Done**  
-  - In Tips, choose **Open Privacy & Security settings for me**  
-  - Scroll to **“GoBuddy was blocked to protect your Mac”**  
-  - Click **Open Anyway**
+- macOS
+  - Click the `question-mark icon` in the top-right to open Tips  
+  - Select `Done`  
+  - In Tips, choose `Open Privacy & Security settings for me`  
+  - Scroll to `“GoBuddy was blocked to protect your Mac”`  
+  - Click `Open Anyway`
 
 - GoBuddy is safe to use. We’re completing the official developer verification for macOS and Windows.
 
@@ -70,7 +70,7 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
 
 ### Add Your OpenAI API Key
 
-- Open **Settings**  
+- Open `Settings`  
 - Paste your API key (starts with `sk-`)  
 - This key lets GoBuddy connect to the AI
 
@@ -79,16 +79,16 @@ GoBuddy is built to help you reach AI faster. We all have a few go-to prompts, a
 ### Record Your Hotkeys
 
 - In the main window, choose a shortcut type  
-  - **Inline** replaces your highlighted text directly  
-  - **Popup** shows a floating response window  
-- Click **Record Hotkey** and press your shortcut  
+  - `Inline` replaces your highlighted text directly  
+  - `Popup` shows a floating response window  
+- Click `Record Hotkey` and press your shortcut  
 - Hotkeys work from any app
 
 ---
 
 ### Create Your Presets
 
-- Click **+ Add Preset**  
+- Click `+ Add Preset`  
 - Name your preset  
 - Add the instructions you want GoBuddy to follow (translate, rewrite, summarize, etc.)
 
