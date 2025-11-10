@@ -68,17 +68,15 @@ GoBuddy is safe to use. We’re currently completing the official developer veri
 
 ### Add Your OpenAI API Key
 
-GoBuddy needs your API key to connect with the AI. To set it up:
-
 - Open **Settings**
 - Paste your API key (it starts with `sk-`)
+- GoBuddy needs your API key to connect with the AI
 
 ### Record Your Hotkeys
 
-Set shortcuts you can trigger from any app:
-
 - In the main window, choose **Inline** or **Popup**
 - Click **Record Hotkey** and press the keys you want to use
+- You can trigger GoBuddy from any app using hotkeys
 
 **Inline**  
 - Replaces your highlighted text directly
@@ -87,8 +85,6 @@ Set shortcuts you can trigger from any app:
 - Shows a floating response window
 
 ### Create Your Presets
-
-Customize GoBuddy to your workflow:
 
 - Click **+ Add Preset**
 - Give it a name
