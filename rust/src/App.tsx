@@ -10,17 +10,17 @@ const inputIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' 
 const cursorIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E";
 const plusIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='5' x2='12' y2='19'/%3E%3Cline x1='5' y1='12' x2='19' y2='12'/%3E%3C/svg%3E";
 
-const STORAGE_KEY = "gobuddy_profiles_v1";
+const STORAGE_KEY = "gobuddy_presets_v1";
 
 type View = "screenshot" | "inputField" | "selection";
 const allViews: View[] = ["screenshot", "inputField", "selection"];
 
 type Panel =
   | { type: "section-config"; view: View }
-  | { type: "profile-editor"; view: View; profileId: string }
+  | { type: "preset-editor"; view: View; presetId: string }
   | { type: "settings" };
 
-interface Profile {
+interface Preset {
   id: string;
   name: string;
   prompt: string;
@@ -36,17 +36,17 @@ interface HotkeysState {
 }
 
 interface PersistedState {
-  profiles: Record<View, Profile[]>;
-  nextProfileId: number;
-  activeProfileIds: Record<View, string | null>;
+  presets: Record<View, Preset[]>;
+  nextPresetId: number;
+  activePresetIds: Record<View, string | null>;
   settings?: SettingsState;
   hotkeys?: HotkeysState;
 }
 
 const viewLabels: Record<View, string> = {
   screenshot: "ScreenShot",
-  inputField: "InputField",
-  selection: "Selection",
+  inputField: "Inline",
+  selection: "Popup",
 };
 
 const defaultSettings: SettingsState = {
@@ -58,33 +58,33 @@ const defaultHotkeys: HotkeysState = {
   screenshot: "",
 };
 
-const createEmptyProfiles = (): Record<View, Profile[]> => ({
+const createEmptyPresets = (): Record<View, Preset[]> => ({
   screenshot: [],
   inputField: [],
   selection: [],
 });
 
-const createEmptyActiveProfiles = (): Record<View, string | null> => ({
+const createEmptyActivePresets = (): Record<View, string | null> => ({
   screenshot: null,
   inputField: null,
   selection: null,
 });
 
-const sanitizeProfile = (profile: Partial<Profile> & { id: string }): Profile => ({
-  id: profile.id,
-  name: profile.name ?? "Untitled Profile",
-  prompt: profile.prompt ?? "",
+const sanitizePreset = (preset: Partial<Preset> & { id: string }): Preset => ({
+  id: preset.id,
+  name: preset.name ?? "Untitled Preset",
+  prompt: preset.prompt ?? "",
 });
 
-const normalizeProfiles = (
-  profiles: Partial<Record<View, Profile[]>> | undefined,
-): Record<View, Profile[]> => ({
-  screenshot: (profiles?.screenshot ?? []).map((profile) => sanitizeProfile(profile)),
-  inputField: (profiles?.inputField ?? []).map((profile) => sanitizeProfile(profile)),
-  selection: (profiles?.selection ?? []).map((profile) => sanitizeProfile(profile)),
+const normalizePresets = (
+  presets: Partial<Record<View, Preset[]>> | undefined,
+): Record<View, Preset[]> => ({
+  screenshot: (presets?.screenshot ?? []).map((preset) => sanitizePreset(preset)),
+  inputField: (presets?.inputField ?? []).map((preset) => sanitizePreset(preset)),
+  selection: (presets?.selection ?? []).map((preset) => sanitizePreset(preset)),
 });
 
-const normalizeActiveProfileIds = (
+const normalizeActivePresetIds = (
   activeIds: Partial<Record<View, string | null>> | undefined,
 ): Record<View, string | null> => ({
   screenshot: activeIds?.screenshot ?? null,
@@ -92,11 +92,11 @@ const normalizeActiveProfileIds = (
   selection: activeIds?.selection ?? null,
 });
 
-const deriveNextProfileId = (profiles: Record<View, Profile[]>): number => {
-  const maxFromIds = Object.values(profiles)
+const deriveNextPresetId = (presets: Record<View, Preset[]>): number => {
+  const maxFromIds = Object.values(presets)
     .flat()
-    .map((profile) => {
-      const match = profile.id.match(/profile-(\d+)/);
+    .map((preset) => {
+      const match = preset.id.match(/preset-(\d+)/);
       return match ? Number.parseInt(match[1], 10) : 0;
     })
     .reduce((acc, value) => Math.max(acc, value), 0);
@@ -189,10 +189,10 @@ const isTauriEnvironment = (): boolean =>
 function App() {
   const [activeView, setActiveView] = useState<View>("screenshot");
   const [activePanel, setActivePanel] = useState<Panel>({ type: "section-config", view: "screenshot" });
-  const [profiles, setProfiles] = useState<Record<View, Profile[]>>(() => createEmptyProfiles());
-  const [nextProfileId, setNextProfileId] = useState<number>(1);
-  const [activeProfileIds, setActiveProfileIds] = useState<Record<View, string | null>>(
-    () => createEmptyActiveProfiles(),
+  const [presets, setPresets] = useState<Record<View, Preset[]>>(() => createEmptyPresets());
+  const [nextPresetId, setNextPresetId] = useState<number>(1);
+  const [activePresetIds, setActivePresetIds] = useState<Record<View, string | null>>(
+    () => createEmptyActivePresets(),
   );
   const [settings, setSettings] = useState<SettingsState>(defaultSettings);
   const [hotkeys, setHotkeys] = useState<HotkeysState>(defaultHotkeys);
@@ -211,33 +211,33 @@ function App() {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as Partial<PersistedState>;
-        const normalizedProfiles = normalizeProfiles(parsed.profiles);
-        setProfiles(normalizedProfiles);
+        const normalizedPresets = normalizePresets(parsed.presets);
+        setPresets(normalizedPresets);
 
-        const storedNextProfileId = parsed.nextProfileId;
-        if (typeof storedNextProfileId === "number" && storedNextProfileId > 0) {
-          setNextProfileId(storedNextProfileId);
+        const storedNextPresetId = parsed.nextPresetId;
+        if (typeof storedNextPresetId === "number" && storedNextPresetId > 0) {
+          setNextPresetId(storedNextPresetId);
         } else {
-          setNextProfileId(deriveNextProfileId(normalizedProfiles));
+          setNextPresetId(deriveNextPresetId(normalizedPresets));
         }
 
-        const normalizedActiveIds = normalizeActiveProfileIds(parsed.activeProfileIds);
-        setActiveProfileIds(normalizedActiveIds);
+        const normalizedActiveIds = normalizeActivePresetIds(parsed.activePresetIds);
+        setActivePresetIds(normalizedActiveIds);
 
         setSettings(normalizeSettings(parsed.settings));
         setHotkeys(normalizeHotkeys(parsed.hotkeys));
       } else {
-        setProfiles(createEmptyProfiles());
-        setNextProfileId(1);
-        setActiveProfileIds(createEmptyActiveProfiles());
+        setPresets(createEmptyPresets());
+        setNextPresetId(1);
+        setActivePresetIds(createEmptyActivePresets());
         setSettings(defaultSettings);
         setHotkeys(defaultHotkeys);
       }
     } catch (error) {
-      console.warn("Failed to load profiles from storage", error);
-      setProfiles(createEmptyProfiles());
-      setNextProfileId(1);
-      setActiveProfileIds(createEmptyActiveProfiles());
+      console.warn("Failed to load presets from storage", error);
+      setPresets(createEmptyPresets());
+      setNextPresetId(1);
+      setActivePresetIds(createEmptyActivePresets());
       setSettings(defaultSettings);
       setHotkeys(defaultHotkeys);
     } finally {
@@ -251,9 +251,9 @@ function App() {
     }
 
     const payload: PersistedState = {
-      profiles,
-      nextProfileId,
-      activeProfileIds,
+      presets,
+      nextPresetId,
+      activePresetIds,
       settings,
       hotkeys,
     };
@@ -261,21 +261,21 @@ function App() {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch (error) {
-      console.warn("Failed to persist profiles", error);
+      console.warn("Failed to persist presets", error);
     }
-  }, [profiles, nextProfileId, activeProfileIds, settings, hotkeys]);
+  }, [presets, nextPresetId, activePresetIds, settings, hotkeys]);
 
   useEffect(() => {
     if (!hasHydratedRef.current) {
       return;
     }
 
-    setActiveProfileIds((prev) => {
+    setActivePresetIds((prev) => {
       let updated = false;
       const nextState: Record<View, string | null> = { ...prev };
 
       allViews.forEach((view) => {
-        const currentList = profiles[view];
+        const currentList = presets[view];
 
         if (currentList.length === 0) {
           if (nextState[view] !== null) {
@@ -285,7 +285,7 @@ function App() {
           return;
         }
 
-        if (!currentList.some((profile) => profile.id === nextState[view])) {
+        if (!currentList.some((preset) => preset.id === nextState[view])) {
           nextState[view] = currentList[0].id;
           updated = true;
         }
@@ -295,15 +295,15 @@ function App() {
     });
 
     setActivePanel((prev) => {
-      if (prev.type === "profile-editor") {
-        const list = profiles[prev.view];
-        if (!list.some((profile) => profile.id === prev.profileId)) {
+      if (prev.type === "preset-editor") {
+        const list = presets[prev.view];
+        if (!list.some((preset) => preset.id === prev.presetId)) {
           return { type: "section-config", view: prev.view };
         }
       }
       return prev;
     });
-  }, [profiles]);
+  }, [presets]);
 
   useEffect(() => {
     if (!isRecordingHotkey) {
@@ -452,58 +452,58 @@ function App() {
     setActivePanel({ type: "section-config", view });
   };
 
-  const addProfile = (view: View) => {
-    const newProfile: Profile = {
-      id: `profile-${nextProfileId}`,
-      name: `Profile ${nextProfileId}`,
+  const addPreset = (view: View) => {
+    const newPreset: Preset = {
+      id: `preset-${nextPresetId}`,
+      name: `Preset ${nextPresetId}`,
       prompt: "",
     };
 
-    setProfiles((prev) => ({
+    setPresets((prev) => ({
       ...prev,
-      [view]: [...prev[view], newProfile],
+      [view]: [...prev[view], newPreset],
     }));
 
-    setActiveProfileIds((prev) => ({
+    setActivePresetIds((prev) => ({
       ...prev,
-      [view]: newProfile.id,
+      [view]: newPreset.id,
     }));
 
-    setActivePanel({ type: "profile-editor", view, profileId: newProfile.id });
-    setNextProfileId((prev) => prev + 1);
+    setActivePanel({ type: "preset-editor", view, presetId: newPreset.id });
+    setNextPresetId((prev) => prev + 1);
   };
 
-  const updateProfile = (
+  const updatePreset = (
     view: View,
-    profileId: string,
-    updates: Partial<Omit<Profile, "id">>,
+    presetId: string,
+    updates: Partial<Omit<Preset, "id">>,
   ) => {
-    setProfiles((prev) => ({
+    setPresets((prev) => ({
       ...prev,
-      [view]: prev[view].map((profile) =>
-        profile.id === profileId ? { ...profile, ...updates } : profile,
+      [view]: prev[view].map((preset) =>
+        preset.id === presetId ? { ...preset, ...updates } : preset,
       ),
     }));
   };
 
-  const handleProfileClick = (view: View, profileId: string) => {
+  const handlePresetClick = (view: View, presetId: string) => {
     setActiveView(view);
-    setActiveProfileIds((prev) => ({
+    setActivePresetIds((prev) => ({
       ...prev,
-      [view]: profileId,
+      [view]: presetId,
     }));
-    setActivePanel({ type: "profile-editor", view, profileId });
+    setActivePanel({ type: "preset-editor", view, presetId });
   };
 
-  const deleteProfile = (view: View, profileId: string) => {
-    let updatedList: Profile[] | null = null;
+  const deletePreset = (view: View, presetId: string) => {
+    let updatedList: Preset[] | null = null;
 
-    setProfiles((prev) => {
-      if (!prev[view].some((profile) => profile.id === profileId)) {
+    setPresets((prev) => {
+      if (!prev[view].some((preset) => preset.id === presetId)) {
         return prev;
       }
 
-      updatedList = prev[view].filter((profile) => profile.id !== profileId);
+      updatedList = prev[view].filter((preset) => preset.id !== presetId);
       return {
         ...prev,
         [view]: updatedList,
@@ -514,8 +514,8 @@ function App() {
       return;
     }
 
-    setActiveProfileIds((prev) => {
-      if (prev[view] !== profileId) {
+    setActivePresetIds((prev) => {
+      if (prev[view] !== presetId) {
         return prev;
       }
 
@@ -526,9 +526,9 @@ function App() {
     });
 
     setActivePanel((prev) => {
-      if (prev.type === "profile-editor" && prev.view === view && prev.profileId === profileId) {
+      if (prev.type === "preset-editor" && prev.view === view && prev.presetId === presetId) {
         if (updatedList && updatedList.length > 0) {
-          return { type: "profile-editor", view, profileId: updatedList[0].id };
+          return { type: "preset-editor", view, presetId: updatedList[0].id };
         }
         return { type: "section-config", view };
       }
@@ -536,9 +536,9 @@ function App() {
     });
   };
 
-  const activeProfile =
-    activePanel.type === "profile-editor"
-      ? profiles[activePanel.view].find((profile) => profile.id === activePanel.profileId) ?? null
+  const activePreset =
+    activePanel.type === "preset-editor"
+      ? presets[activePanel.view].find((preset) => preset.id === activePanel.presetId) ?? null
       : null;
 
   const renderScreenshotConfig = () => (
@@ -647,36 +647,36 @@ function App() {
     </div>
   );
 
-  const renderProfileEditor = () => {
-    if (!activeProfile || activePanel.type !== "profile-editor") {
+  const renderPresetEditor = () => {
+    if (!activePreset || activePanel.type !== "preset-editor") {
       return (
         <div className="content-page empty-state">
-          <h2>{viewLabels[activeView]} Profiles</h2>
-          <p>Create or select a profile on the left to start editing.</p>
+          <h2>{viewLabels[activeView]} Presets</h2>
+          <p>Create or select a preset on the left to start editing.</p>
         </div>
       );
     }
 
-    const nameInputId = `profile-name-${activeProfile.id}`;
-    const promptInputId = `profile-prompt-${activeProfile.id}`;
+    const nameInputId = `preset-name-${activePreset.id}`;
+    const promptInputId = `preset-prompt-${activePreset.id}`;
 
     return (
-      <div className="profile-editor">
-        <div className="profile-editor-header">
-          <div className="profile-editor-heading">
-            <span className="profile-editor-subtitle">
-              {viewLabels[activePanel.view]} profile
+      <div className="preset-editor">
+        <div className="preset-editor-header">
+          <div className="preset-editor-heading">
+            <span className="preset-editor-subtitle">
+              {viewLabels[activePanel.view]} preset
             </span>
-            <h1 className="profile-editor-title">
-              {activeProfile.name.trim() === "" ? "Untitled Profile" : activeProfile.name}
+            <h1 className="preset-editor-title">
+              {activePreset.name.trim() === "" ? "Untitled Preset" : activePreset.name}
             </h1>
           </div>
           <button
             type="button"
-            className="delete-profile-button"
-            onClick={() => deleteProfile(activePanel.view, activeProfile.id)}
+            className="delete-preset-button"
+            onClick={() => deletePreset(activePanel.view, activePreset.id)}
           >
-            Delete Profile
+            Delete Preset
           </button>
         </div>
 
@@ -687,11 +687,11 @@ function App() {
           <input
             id={nameInputId}
             className="text-input"
-            value={activeProfile.name}
+            value={activePreset.name}
             onChange={(event) =>
-              updateProfile(activePanel.view, activeProfile.id, { name: event.target.value })
+              updatePreset(activePanel.view, activePreset.id, { name: event.target.value })
             }
-            placeholder="Enter profile name"
+            placeholder="Enter preset name"
           />
         </div>
 
@@ -702,11 +702,11 @@ function App() {
           <textarea
             id={promptInputId}
             className="text-area"
-            value={activeProfile.prompt}
+            value={activePreset.prompt}
             onChange={(event) =>
-              updateProfile(activePanel.view, activeProfile.id, { prompt: event.target.value })
+              updatePreset(activePanel.view, activePreset.id, { prompt: event.target.value })
             }
-            placeholder="Describe what this profile should do..."
+            placeholder="Describe what this preset should do..."
             rows={8}
           />
         </div>
@@ -736,16 +736,16 @@ function App() {
       return renderSectionConfig(activePanel.view);
     }
 
-    if (activePanel.type === "profile-editor") {
-      return renderProfileEditor();
+    if (activePanel.type === "preset-editor") {
+      return renderPresetEditor();
     }
 
     return null;
   };
 
-  const sidebarProfiles = profiles[activeView] ?? [];
-  const selectedProfileId = activeProfileIds[activeView];
-  const profileSidebarEnabled = activePanel.type !== "settings";
+  const sidebarPresets = presets[activeView] ?? [];
+  const selectedPresetId = activePresetIds[activeView];
+  const presetSidebarEnabled = activePanel.type !== "settings";
 
   return (
     <div className="app-container">
@@ -768,8 +768,8 @@ function App() {
             }`}
             onClick={() => handleSectionNavClick("inputField")}
           >
-            <img src={inputIcon} alt="InputField" className="button-icon" />
-            <span>InputField</span>
+            <img src={inputIcon} alt="Inline" className="button-icon" />
+            <span>Inline</span>
           </button>
           <button
             type="button"
@@ -778,34 +778,34 @@ function App() {
             }`}
             onClick={() => handleSectionNavClick("selection")}
           >
-            <img src={cursorIcon} alt="Selection" className="button-icon" />
-            <span>Selection</span>
+            <img src={cursorIcon} alt="Popup" className="button-icon" />
+            <span>Popup</span>
           </button>
         </div>
 
-        {profileSidebarEnabled && (
-          <div className="profiles-section">
-            <div className="profiles-label">Profiles</div>
+        {presetSidebarEnabled && (
+          <div className="presets-section">
+            <div className="presets-label">Presets</div>
             <button
               type="button"
-              className="profile-button add-profile-button"
-              onClick={() => addProfile(activeView)}
+              className="preset-button add-preset-button"
+              onClick={() => addPreset(activeView)}
             >
               <img src={plusIcon} alt="Add" className="button-icon" />
-              <span>Add Profile</span>
+              <span>Add Preset</span>
             </button>
-            <div className="profile-list">
-              {sidebarProfiles.length === 0 ? (
-                <div className="profiles-empty">No profiles yet. Add one to get started.</div>
+            <div className="preset-list">
+              {sidebarPresets.length === 0 ? (
+                <div className="presets-empty">No presets yet. Add one to get started.</div>
               ) : (
-                sidebarProfiles.map((profile) => (
+                sidebarPresets.map((preset) => (
                   <button
                     type="button"
-                    key={profile.id}
-                    className={`profile-button ${selectedProfileId === profile.id ? "active" : ""}`}
-                    onClick={() => handleProfileClick(activeView, profile.id)}
+                    key={preset.id}
+                    className={`preset-button ${selectedPresetId === preset.id ? "active" : ""}`}
+                    onClick={() => handlePresetClick(activeView, preset.id)}
                   >
-                    <span>{profile.name}</span>
+                    <span>{preset.name}</span>
                   </button>
                 ))
               )}

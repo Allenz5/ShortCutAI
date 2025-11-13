@@ -122,7 +122,7 @@ body {
   color: #4d4d55;
 }
 
-.profiles-section {
+.presets-section {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -133,7 +133,7 @@ body {
   overflow: hidden;
 }
 
-.profiles-label {
+.presets-label {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -141,7 +141,7 @@ body {
   color: #6f6f77;
 }
 
-.profile-list {
+.preset-list {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -150,24 +150,24 @@ body {
   padding-bottom: 4px;
 }
 
-.profile-list::-webkit-scrollbar {
+.preset-list::-webkit-scrollbar {
   width: 6px;
 }
 
-.profile-list::-webkit-scrollbar-track {
+.preset-list::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.profile-list::-webkit-scrollbar-thumb {
+.preset-list::-webkit-scrollbar-thumb {
   background: #b9b9c2;
   border-radius: 3px;
 }
 
-.profile-list::-webkit-scrollbar-thumb:hover {
+.preset-list::-webkit-scrollbar-thumb:hover {
   background: #a9a9b2;
 }
 
-.profile-button {
+.preset-button {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -183,72 +183,72 @@ body {
   text-align: left;
 }
 
-.profile-button:hover,
-.profile-button:focus-visible {
+.preset-button:hover,
+.preset-button:focus-visible {
   background-color: #d8d8df;
   border-color: #c1c1c9;
   color: #1f1f26;
 }
 
-.profile-button.active {
+.preset-button.active {
   background-color: #396cd8;
   border-color: #396cd8;
   color: #ffffff;
 }
 
-.profile-button .button-icon {
+.preset-button .button-icon {
   width: 14px;
   height: 14px;
 }
 
-.add-profile-button {
+.add-preset-button {
   color: #555560;
   border: 1px dashed #bbbbc3;
   justify-content: center;
   background-color: #f5f5f8;
 }
 
-.add-profile-button:hover,
-.add-profile-button:focus-visible {
+.add-preset-button:hover,
+.add-preset-button:focus-visible {
   border-color: #9b9ba6;
   background-color: #e5e5ec;
   color: #1f1f26;
 }
 
-.profiles-empty {
+.presets-empty {
   padding: 10px 0;
   font-size: 12px;
   color: #7a7a84;
 }
 
-.profile-editor {
+.preset-editor {
   display: flex;
   flex-direction: column;
   gap: 18px;
   max-width: 720px;
 }
 
-.profile-editor-header {
+.preset-editor-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
 }
 
-.profile-editor-heading {
+.preset-editor-heading {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.profile-editor-subtitle {
+.preset-editor-subtitle {
   font-size: 12px;
   letter-spacing: 0.6px;
   text-transform: uppercase;
   color: #7a7a84;
 }
 
-.profile-editor-title {
+.preset-editor-title {
   margin: 0;
   font-size: 26px;
   font-weight: 600;
@@ -294,7 +294,7 @@ body {
   box-shadow: 0 0 0 2px rgba(57, 108, 216, 0.15);
 }
 
-.delete-profile-button {
+.delete-preset-button {
   padding: 8px 14px;
   border-radius: 6px;
   border: 1px solid #d66a6a;
@@ -306,8 +306,8 @@ body {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-.delete-profile-button:hover,
-.delete-profile-button:focus-visible {
+.delete-preset-button:hover,
+.delete-preset-button:focus-visible {
   background-color: #f8d6d6;
   border-color: #c45858;
   color: #7f1f1f;
