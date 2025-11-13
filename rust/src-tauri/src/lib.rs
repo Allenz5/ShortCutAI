@@ -48,7 +48,7 @@ fn show_overlay_at_position(app: &AppHandle, x: f64, y: f64) {
             Some(window) => {
                 // Position the window near the mouse cursor
                 // Offset slightly so button appears next to cursor, not under it
-                let _ = window.set_size(PhysicalSize::new(40, 40));
+                let _ = window.set_size(PhysicalSize::new(32, 32));
                 let _ = window.set_position(PhysicalPosition::new(x as i32 + 10, y as i32 + 10));
                 let _ = window.show();
                 let _ = window.set_focus();
@@ -61,9 +61,9 @@ fn show_overlay_at_position(app: &AppHandle, x: f64, y: f64) {
                     tauri::WebviewUrl::App("overlay.html".into()),
                 )
                 .title("Overlay")
-                .inner_size(40.0, 40.0)
-                .min_inner_size(40.0, 40.0)
-                .max_inner_size(40.0, 40.0)
+                .inner_size(32.0, 32.0)
+                .min_inner_size(32.0, 32.0)
+                .max_inner_size(32.0, 32.0)
                 .position(x + 10.0, y + 10.0)
                 .decorations(false)
                 .transparent(true)
@@ -75,7 +75,7 @@ fn show_overlay_at_position(app: &AppHandle, x: f64, y: f64) {
 
                 if let Ok(win) = window {
                     // Set size explicitly before showing
-                    let _ = win.set_size(PhysicalSize::new(40, 40));
+                    let _ = win.set_size(PhysicalSize::new(32, 32));
                     let _ = win.show();
                     let _ = win.set_focus();
                 }
