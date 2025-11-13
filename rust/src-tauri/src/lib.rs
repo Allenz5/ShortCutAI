@@ -95,29 +95,31 @@ fn start_mouse_listener(app: AppHandle) {
             
             match event.event_type {
                 EventType::ButtonPress(Button::Left) => {
-                    // If overlay is visible, close it on any left click
-                    if *is_overlay_visible {
-                        *is_overlay_visible = false;
-                        let app_clone = app.clone();
-                        tauri::async_runtime::spawn(async move {
-                            let _ = hide_overlay(app_clone).await;
-                        });
-                    } else {
-                        // Start tracking drag - use current tracked position
-                        state.is_pressed = true;
-                        state.start_x = state.last_x;
-                        state.start_y = state.last_y;
-                        state.has_moved = false;
-                    }
+                    // Start tracking drag or click - use current tracked position
+                    state.is_pressed = true;
+                    state.start_x = state.last_x;
+                    state.start_y = state.last_y;
+                    state.has_moved = false;
                 }
                 EventType::ButtonRelease(Button::Left) => {
-                    // Check if this was a drag (moved while pressed)
-                    if state.is_pressed && state.has_moved && !*is_overlay_visible {
-                        // Show overlay at the release position
-                        let x = state.last_x;
-                        let y = state.last_y;
-                        show_overlay_at_position(&app, x, y);
-                        *is_overlay_visible = true;
+                    if *is_overlay_visible {
+                        // If overlay is visible and this was a click (not a drag), close it
+                        if state.is_pressed && !state.has_moved {
+                            *is_overlay_visible = false;
+                            let app_clone = app.clone();
+                            tauri::async_runtime::spawn(async move {
+                                let _ = hide_overlay(app_clone).await;
+                            });
+                        }
+                    } else {
+                        // Check if this was a drag (moved while pressed)
+                        if state.is_pressed && state.has_moved {
+                            // Show overlay at the release position
+                            let x = state.last_x;
+                            let y = state.last_y;
+                            show_overlay_at_position(&app, x, y);
+                            *is_overlay_visible = true;
+                        }
                     }
                     
                     // Reset drag state
