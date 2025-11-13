@@ -28,6 +28,7 @@ interface Profile {
 
 interface SettingsState {
   autoOpenOnStart: boolean;
+  openaiApiKey: string;
 }
 
 interface HotkeysState {
@@ -50,6 +51,7 @@ const viewLabels: Record<View, string> = {
 
 const defaultSettings: SettingsState = {
   autoOpenOnStart: false,
+  openaiApiKey: "",
 };
 
 const defaultHotkeys: HotkeysState = {
@@ -106,6 +108,10 @@ const normalizeSettings = (settings: SettingsState | undefined): SettingsState =
     typeof settings?.autoOpenOnStart === "boolean"
       ? settings.autoOpenOnStart
       : defaultSettings.autoOpenOnStart,
+  openaiApiKey:
+    typeof settings?.openaiApiKey === "string"
+      ? settings.openaiApiKey
+      : defaultSettings.openaiApiKey,
 });
 
 const normalizeHotkeys = (hotkeys: HotkeysState | undefined): HotkeysState => ({
@@ -615,6 +621,27 @@ function App() {
             />
             <span className="switch-slider" aria-hidden="true" />
           </label>
+        </div>
+      </div>
+
+      <div className="settings-group">
+        <div className="field-group">
+          <label className="field-label" htmlFor="openai-api-key">
+            OpenAI API Key
+          </label>
+          <input
+            id="openai-api-key"
+            className="text-input"
+            type="password"
+            value={settings.openaiApiKey}
+            onChange={(event) =>
+              setSettings((prev) => ({
+                ...prev,
+                openaiApiKey: event.target.value,
+              }))
+            }
+            placeholder="Enter your OpenAI API key"
+          />
         </div>
       </div>
     </div>
