@@ -40,16 +40,20 @@ async fn hide_overlay(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-fn show_overlay_at_position(app: &AppHandle, x: f64, y: f64) {
+fn show_overlay_at_position(app: &AppHandle, x: f64, y: f64, start_x: f64) {
     let app_handle = app.clone();
     
     tauri::async_runtime::spawn(async move {
+        // Determine offset direction based on drag direction
+        // If dragged to the left (end_x < start_x), show button to the left
+        let x_offset = if x < start_x { -50.0 } else { 10.0 };
+        
         match app_handle.get_webview_window("overlay") {
             Some(window) => {
                 // Position the window near the mouse cursor
                 // Offset slightly so button appears next to cursor, not under it
                 let _ = window.set_size(PhysicalSize::new(32, 32));
-                let _ = window.set_position(PhysicalPosition::new(x as i32 + 10, y as i32 + 10));
+                let _ = window.set_position(PhysicalPosition::new((x + x_offset) as i32, (y + 10.0) as i32));
                 let _ = window.show();
                 let _ = window.set_focus();
             }
@@ -64,7 +68,7 @@ fn show_overlay_at_position(app: &AppHandle, x: f64, y: f64) {
                 .inner_size(32.0, 32.0)
                 .min_inner_size(32.0, 32.0)
                 .max_inner_size(32.0, 32.0)
-                .position(x + 10.0, y + 10.0)
+                .position(x + x_offset, y + 10.0)
                 .decorations(false)
                 .transparent(true)
                 .always_on_top(true)
@@ -95,6 +99,15 @@ fn start_mouse_listener(app: AppHandle) {
             
             match event.event_type {
                 EventType::ButtonPress(Button::Left) => {
+                    // If overlay is visible, close it immediately on mouse down
+                    if *is_overlay_visible {
+                        *is_overlay_visible = false;
+                        let app_clone = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            let _ = hide_overlay(app_clone).await;
+                        });
+                    }
+                    
                     // Start tracking drag or click - use current tracked position
                     state.is_pressed = true;
                     state.start_x = state.last_x;
@@ -102,22 +115,14 @@ fn start_mouse_listener(app: AppHandle) {
                     state.has_moved = false;
                 }
                 EventType::ButtonRelease(Button::Left) => {
-                    if *is_overlay_visible {
-                        // If overlay is visible and this was a click (not a drag), close it
-                        if state.is_pressed && !state.has_moved {
-                            *is_overlay_visible = false;
-                            let app_clone = app.clone();
-                            tauri::async_runtime::spawn(async move {
-                                let _ = hide_overlay(app_clone).await;
-                            });
-                        }
-                    } else {
+                    if !*is_overlay_visible {
                         // Check if this was a drag (moved while pressed)
                         if state.is_pressed && state.has_moved {
                             // Show overlay at the release position
                             let x = state.last_x;
                             let y = state.last_y;
-                            show_overlay_at_position(&app, x, y);
+                            let start_x = state.start_x;
+                            show_overlay_at_position(&app, x, y, start_x);
                             *is_overlay_visible = true;
                         }
                     }
