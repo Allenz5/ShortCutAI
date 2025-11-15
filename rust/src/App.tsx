@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import {
   register as registerGlobalShortcut,
   unregister as unregisterGlobalShortcut,
@@ -201,6 +202,42 @@ function App() {
 
   const hasHydratedRef = useRef(false);
   const registeredScreenshotHotkeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isTauriEnvironment()) {
+      return;
+    }
+
+    const hideFloatingUi = () => {
+      invoke("hide_overlay").catch(() => {});
+      invoke("hide_floating_window").catch(() => {});
+    };
+
+    const handleKeyDown = () => {
+      hideFloatingUi();
+    };
+
+    const handleFocus = () => {
+      invoke("set_main_focus_state", { focused: true }).catch(() => {});
+    };
+
+    const handleBlur = () => {
+      invoke("set_main_focus_state", { focused: false }).catch(() => {});
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("blur", handleBlur);
+
+    handleFocus();
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("blur", handleBlur);
+      handleBlur();
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {

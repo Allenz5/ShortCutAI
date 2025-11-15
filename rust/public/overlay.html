@@ -46,6 +46,7 @@
             display: block;
             border-radius: 6px;
             transition: transform 0.1s ease;
+            box-shadow: none;
         }
 
         .overlay-button:active img {
@@ -59,17 +60,14 @@
     </button>
 
     <script>
-        const { invoke } = window.__TAURI__.core;
-
-        document.getElementById('overlayBtn').addEventListener('mousedown', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Overlay button pressed!');
-            // You can add your custom action here
-            
-            // Note: The overlay will be hidden by the global left-click handler
-            // But we can also explicitly hide it here for immediate feedback
-            await invoke('hide_overlay');
+        const overlayBtn = document.getElementById('overlayBtn');
+        overlayBtn.addEventListener('mousedown', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        });
+        overlayBtn.addEventListener('mouseup', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
         });
     </script>
 </body>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GoBuddy Floating Window</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+      }
+
+      .panel {
+        width: 100%;
+        height: 100%;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: none;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        overflow: hidden;
+        position: relative;
+        -webkit-app-region: drag;
+      }
+
+      .panel-section {
+        flex: 1;
+        background: #ffffff;
+      }
+
+      .divider {
+        height: 1px;
+        width: 100%;
+        background: #d3d7e3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panel">
+      <div class="panel-section"></div>
+      <div class="divider"></div>
+      <div class="panel-section"></div>
+      <div class="divider"></div>
+      <div class="panel-section"></div>
+    </div>
+
+    <script>
+      const { core: { invoke } } = window.__TAURI__;
+
+      async function closeWindow() {
+        await invoke('hide_floating_window');
+      }
+
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          closeWindow();
+        }
+      });
+    </script>
+  </body>
+</html>
