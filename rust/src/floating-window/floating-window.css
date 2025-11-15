@@ -34,6 +34,7 @@ body {
   height: 100%;
   background: #ffffff;
   border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
   padding: 4px 6px;
   display: flex;
   flex-direction: column;
@@ -110,15 +111,4 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: left;
-}
-
-.preset-empty-message {
-  width: 100%;
-  font-size: 9px;
-  color: #8f95a9;
-  text-align: center;
-  padding: 2px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }

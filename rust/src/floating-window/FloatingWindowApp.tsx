@@ -181,24 +181,23 @@ export function FloatingWindowApp() {
       <div className="panel-scroll">
         {SECTION_CONFIG.map(({ key, label }) => {
           const sectionPresets = presets[key] ?? [];
+          if (sectionPresets.length === 0) {
+            return null;
+          }
           return (
             <section className="section" key={key} data-view={key}>
               <div className="preset-list">
-                {sectionPresets.length === 0 ? (
-                  <div className="preset-empty-message">No presets in {label}</div>
-                ) : (
-                  sectionPresets.map((preset, index) => (
-                    <button
-                      type="button"
-                      className="preset-button"
-                      key={preset?.id ?? `preset-${key}-${index}`}
-                      onClick={() => handlePresetClick(key, preset?.id ?? null)}
-                    >
-                      <img src={ICONS[key]} alt={`${label} preset icon`} />
-                      <span>{preset?.name?.trim() ? preset.name : "Untitled Preset"}</span>
-                    </button>
-                  ))
-                )}
+                {sectionPresets.map((preset, index) => (
+                  <button
+                    type="button"
+                    className="preset-button"
+                    key={preset?.id ?? `preset-${key}-${index}`}
+                    onClick={() => handlePresetClick(key, preset?.id ?? null)}
+                  >
+                    <img src={ICONS[key]} alt={`${label} preset icon`} />
+                    <span>{preset?.name?.trim() ? preset.name : "Untitled Preset"}</span>
+                  </button>
+                ))}
               </div>
             </section>
           );

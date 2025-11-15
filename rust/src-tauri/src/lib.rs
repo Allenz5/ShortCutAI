@@ -192,6 +192,7 @@ fn ensure_overlay_window(app: &AppHandle) {
     .transparent(true)
     .always_on_top(true)
     .resizable(false)
+    .shadow(true)
     .skip_taskbar(true)
     .visible(false)
     .build();
@@ -214,6 +215,7 @@ fn ensure_floating_window(app: &AppHandle) {
     .always_on_top(true)
     .transparent(true)
     .decorations(false)
+    .shadow(true)
     .position(0.0, 0.0)
     .visible(false)
     .build();
