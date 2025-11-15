@@ -14,27 +14,29 @@
       html,
       body {
         width: 100%;
-        height: 100%;
+        min-height: 100%;
         background: transparent;
         font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
       }
 
       body {
         display: flex;
-        align-items: center;
+        align-items: stretch;
         justify-content: center;
         background: transparent;
+        padding: 0;
+        margin: 0;
       }
 
       .panel {
         width: 100%;
-        height: 100%;
         background: #ffffff;
         border-radius: 12px;
         box-shadow: none;
         padding: 12px 14px;
         display: flex;
         flex-direction: column;
+        align-items: stretch;
         gap: 10px;
         overflow: hidden;
         position: relative;
@@ -42,7 +44,7 @@
       }
 
       .section {
-        flex: 1;
+        flex: 0 0 auto;
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -57,6 +59,7 @@
         display: flex;
         flex-direction: column;
         gap: 4px;
+        -webkit-app-region: no-drag;
       }
 
       .preset-button {
@@ -64,13 +67,15 @@
         align-items: center;
         gap: 6px;
         width: 100%;
-        padding: 6px 8px;
-        border: 1px solid #d7dce8;
+        padding: 4px 6px;
+        border: 1px solid #cfd4e3;
         border-radius: 8px;
         background: #f8f9fb;
-        font-size: 12px;
+        font-size: 11px;
         color: #111322;
         cursor: pointer;
+        min-height: 26px;
+        -webkit-app-region: no-drag;
       }
 
       .preset-button img {
@@ -86,9 +91,11 @@
         text-align: left;
       }
 
-      .preset-empty {
-        font-size: 11px;
-        color: #98a2b3;
+      .preset-empty-line {
+        width: 100%;
+        height: 1px;
+        background: #e3e6ef;
+        margin: 8px 0;
       }
     </style>
   </head>
@@ -107,66 +114,64 @@
 
     <script>
       const STORAGE_KEY = "gobuddy_presets_v1";
-      const STORE_FILE = "gobuddy.store.json";
-      const STORE_STATE_KEY = "gobuddy_state_v1";
+      const PRESETS_STATE_EVENT = "gobuddy://presets-state";
+      const PRESET_CLICK_EVENT = "gobuddy://preset-selected";
+      const tauriApi = window.__TAURI__ ?? {};
+      const invoke = tauriApi?.core?.invoke;
+      const tauriEvents = tauriApi?.event;
+
       const ICONS = {
         screenshot: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475467' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/%3E%3Ccircle cx='12' cy='13' r='4'/%3E%3C/svg%3E",
         inputField: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475467' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cline x1='9' y1='9' x2='15' y2='9'/%3E%3Cline x1='9' y1='15' x2='15' y2='15'/%3E%3Cline x1='9' y1='12' x2='15' y2='12'/%3E%3C/svg%3E",
         selection: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475467' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E",
       };
-
-      const emptyTexts = {
-        screenshot: "No Screenshot Presets",
-        inputField: "No Inline Presets",
-        selection: "No Popup Presets",
-      };
-
       const sections = Array.from(document.querySelectorAll('.section')).map((section) => {
         const view = section.getAttribute('data-view');
         const list = section.querySelector('.preset-list');
         return { view, list };
       });
 
-      let presetStore = null;
+      const createEmptyState = () => ({
+        presets: {
+          screenshot: [],
+          inputField: [],
+          selection: [],
+        },
+      });
 
-      async function readPersistedState() {
-        if (window.__TAURI__?.store?.Store) {
-          try {
-            if (!presetStore) {
-              presetStore = await window.__TAURI__.store.Store.load(STORE_FILE);
-            }
-            const stored = await presetStore.get(STORE_STATE_KEY);
-            if (stored) {
-              return stored;
-            }
-          } catch (error) {
-            console.warn("Failed to read store in floating window", error);
-          }
+      const normalizeState = (raw) => {
+        if (!raw || typeof raw !== 'object') {
+          return createEmptyState();
         }
+        const presets = raw.presets && typeof raw.presets === 'object' ? raw.presets : {};
+        return {
+          presets: {
+            screenshot: Array.isArray(presets.screenshot) ? presets.screenshot : [],
+            inputField: Array.isArray(presets.inputField) ? presets.inputField : [],
+            selection: Array.isArray(presets.selection) ? presets.selection : [],
+          },
+        };
+      };
 
-        try {
-          const fallback = localStorage.getItem(STORAGE_KEY);
-          return fallback ? JSON.parse(fallback) : null;
-        } catch {
-          return null;
-        }
-      }
+      const stateStore = {
+        current: createEmptyState(),
+        set(next) {
+          this.current = normalizeState(next);
+        },
+      };
 
-      async function renderPresets() {
-        const state = (await readPersistedState()) ?? {};
-        const presets = state?.presets ?? {};
-
+      function renderFromState(state) {
+        const presets = state.presets;
         sections.forEach(({ view, list }) => {
           if (!view || !list) {
             return;
           }
-          const viewPresets = Array.isArray(presets[view]) ? presets[view] : [];
+          const viewPresets = presets[view] ?? [];
           list.innerHTML = "";
           if (viewPresets.length === 0) {
-            const empty = document.createElement('div');
-            empty.className = 'preset-empty';
-            empty.textContent = emptyTexts[view] ?? 'Empty';
-            list.appendChild(empty);
+            const line = document.createElement('div');
+            line.className = 'preset-empty-line';
+            list.appendChild(line);
             return;
           }
           viewPresets.forEach((preset) => {
@@ -183,15 +188,49 @@
 
             button.appendChild(icon);
             button.appendChild(label);
+            button.addEventListener('click', () => {
+              if (tauriEvents?.emit) {
+                tauriEvents.emit(PRESET_CLICK_EVENT, { view, presetId: preset?.id ?? null });
+              }
+            });
             list.appendChild(button);
           });
         });
       }
 
-      const { core: { invoke } } = window.__TAURI__;
+      async function fetchLatestState() {
+        if (typeof invoke === 'function') {
+          try {
+            const state = await invoke('load_presets_state');
+            if (state) {
+              return state;
+            }
+          } catch (error) {
+            console.warn("Failed to load presets via Tauri command", error);
+          }
+        }
+
+        try {
+          const fallback = localStorage.getItem(STORAGE_KEY);
+          return fallback ? JSON.parse(fallback) : null;
+        } catch {
+          return null;
+        }
+      }
+
+      const panelElement = document.querySelector('.panel');
+
+      async function refreshPresets() {
+        const latest = await fetchLatestState();
+        stateStore.set(latest);
+        renderFromState(stateStore.current);
+        queueAdjustWindowHeight();
+      }
 
       async function closeWindow() {
-        await invoke('hide_floating_window');
+        if (typeof invoke === 'function') {
+          await invoke('hide_floating_window');
+        }
       }
 
       window.addEventListener('keydown', (event) => {
@@ -201,19 +240,70 @@
         }
       });
 
-      const RENDER_INTERVAL_MS = 1000;
-      void renderPresets();
+      let unsubscribeFromUpdates = null;
+      let adjustHeightRaf = null;
+      function queueAdjustWindowHeight() {
+        if (!panelElement || typeof invoke !== 'function') {
+            return;
+        }
+        if (adjustHeightRaf) {
+          cancelAnimationFrame(adjustHeightRaf);
+        }
+        adjustHeightRaf = requestAnimationFrame(() => {
+          adjustHeightRaf = null;
+          const desiredHeight = panelElement.scrollHeight;
+          if (Number.isFinite(desiredHeight)) {
+            invoke('resize_floating_window', { height: desiredHeight }).catch((error) => {
+              console.warn("Failed to resize floating window", error);
+            });
+          }
+        });
+      }
+
+      async function subscribeToUpdates() {
+        if (!tauriEvents?.listen || unsubscribeFromUpdates) {
+          return;
+        }
+
+        try {
+          const unlisten = await tauriEvents.listen(PRESETS_STATE_EVENT, (event) => {
+            const payload = event?.payload;
+            if (!payload) {
+              return;
+            }
+            stateStore.set(payload);
+            renderFromState(stateStore.current);
+            queueAdjustWindowHeight();
+          });
+
+          unsubscribeFromUpdates = () => {
+            unlisten();
+            unsubscribeFromUpdates = null;
+          };
+        } catch (error) {
+          console.warn("Failed to listen for preset updates", error);
+        }
+      }
+
+      void refreshPresets();
+      void subscribeToUpdates();
+
       window.addEventListener('focus', () => {
-        void renderPresets();
+        void refreshPresets();
+      });
+      window.addEventListener('pageshow', () => {
+        void refreshPresets();
       });
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
-          void renderPresets();
+          void refreshPresets();
         }
       });
-      setInterval(() => {
-        void renderPresets();
-      }, RENDER_INTERVAL_MS);
+      window.addEventListener('beforeunload', () => {
+        if (typeof unsubscribeFromUpdates === 'function') {
+          unsubscribeFromUpdates();
+        }
+      });
     </script>
   </body>
 </html>

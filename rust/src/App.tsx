@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Store } from "@tauri-apps/plugin-store";
+import { emit } from "@tauri-apps/api/event";
 import {
   register as registerGlobalShortcut,
   unregister as unregisterGlobalShortcut,
@@ -13,8 +13,7 @@ const cursorIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
 const plusIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='5' x2='12' y2='19'/%3E%3Cline x1='5' y1='12' x2='19' y2='12'/%3E%3C/svg%3E";
 
 const STORAGE_KEY = "gobuddy_presets_v1";
-const STORE_FILE = "gobuddy.store.json";
-const STORE_STATE_KEY = "gobuddy_state_v1";
+const PRESETS_STATE_EVENT = "gobuddy://presets-state";
 
 type View = "screenshot" | "inputField" | "selection";
 const allViews: View[] = ["screenshot", "inputField", "selection"];
@@ -190,33 +189,20 @@ const isTauriEnvironment = (): boolean =>
   typeof window !== "undefined" &&
   Boolean((window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__);
 
-let persistentStore: Store | null = null;
-
-const getPersistentStore = async (): Promise<Store | null> => {
-  if (!isTauriEnvironment()) {
-    return null;
-  }
-  if (!persistentStore) {
-    persistentStore = await Store.load(STORE_FILE);
-  }
-  return persistentStore;
-};
-
 const readPersistedState = async (): Promise<PersistedState | null> => {
   if (typeof window === "undefined") {
     return null;
   }
 
-  try {
-    const store = await getPersistentStore();
-    if (store) {
-      const stored = (await store.get(STORE_STATE_KEY)) as PersistedState | null;
-      if (stored) {
-        return stored;
+  if (isTauriEnvironment()) {
+    try {
+      const state = (await invoke("load_presets_state")) as PersistedState | null;
+      if (state) {
+        return state;
       }
+    } catch (error) {
+      console.warn("Failed to read presets from Tauri command", error);
     }
-  } catch (error) {
-    console.warn("Failed to read persistent store", error);
   }
 
   try {
@@ -228,25 +214,42 @@ const readPersistedState = async (): Promise<PersistedState | null> => {
   }
 };
 
+const broadcastPresetState = async (state: PersistedState): Promise<void> => {
+  if (!isTauriEnvironment()) {
+    return;
+  }
+
+  try {
+    await emit(PRESETS_STATE_EVENT, state);
+  } catch (error) {
+    console.warn("Failed to broadcast preset updates", error);
+  }
+};
+
 const writePersistedState = async (state: PersistedState): Promise<void> => {
   if (typeof window === "undefined") {
     return;
   }
 
-  try {
-    const store = await getPersistentStore();
-    if (store) {
-      await store.set(STORE_STATE_KEY, state);
-      await store.save();
+  let persistedViaTauri = false;
+
+  if (isTauriEnvironment()) {
+    try {
+      await invoke("save_presets_state", { state });
+      persistedViaTauri = true;
+    } catch (error) {
+      console.warn("Failed to persist presets via Tauri command", error);
     }
-  } catch (error) {
-    console.warn("Failed to write persistent store", error);
   }
 
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
     // Ignore local storage errors (e.g., quota)
+  }
+
+  if (!persistedViaTauri) {
+    void broadcastPresetState(state);
   }
 };
 

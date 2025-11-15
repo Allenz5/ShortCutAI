@@ -1,6 +1,12 @@
-use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize, State};
-use rdev::{listen, Event, EventType, Button};
+use rdev::{listen, Button, Event, EventType};
+use serde::{Deserialize, Serialize};
+use std::{
+    fs,
+    io::{Error, ErrorKind},
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
+use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, State};
 
 // Track drag state
 #[derive(Clone, Debug)]
@@ -32,6 +38,137 @@ struct OverlayState {
     overlay_visible: Arc<Mutex<bool>>,
     floating_bounds: Arc<Mutex<Option<(f64, f64, f64, f64)>>>,
     floating_visible: Arc<Mutex<bool>>,
+}
+
+const PRESETS_STATE_EVENT: &str = "gobuddy://presets-state";
+
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+struct Preset {
+    id: String,
+    name: String,
+    prompt: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct PresetCollection {
+    #[serde(default)]
+    screenshot: Vec<Preset>,
+    #[serde(default, rename = "inputField")]
+    input_field: Vec<Preset>,
+    #[serde(default)]
+    selection: Vec<Preset>,
+}
+
+impl Default for PresetCollection {
+    fn default() -> Self {
+        Self {
+            screenshot: Vec::new(),
+            input_field: Vec::new(),
+            selection: Vec::new(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct ActivePresetIds {
+    #[serde(default)]
+    screenshot: Option<String>,
+    #[serde(default, rename = "inputField")]
+    input_field: Option<String>,
+    #[serde(default)]
+    selection: Option<String>,
+}
+
+impl Default for ActivePresetIds {
+    fn default() -> Self {
+        Self {
+            screenshot: None,
+            input_field: None,
+            selection: None,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct SettingsState {
+    auto_open_on_start: bool,
+    openai_api_key: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct HotkeysState {
+    screenshot: String,
+}
+
+fn default_next_preset_id() -> i32 {
+    1
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct PersistedState {
+    #[serde(default)]
+    presets: PresetCollection,
+    #[serde(default = "default_next_preset_id")]
+    next_preset_id: i32,
+    #[serde(default)]
+    active_preset_ids: ActivePresetIds,
+    settings: Option<SettingsState>,
+    hotkeys: Option<HotkeysState>,
+}
+
+struct PresetStateStore {
+    path: PathBuf,
+    cache: Mutex<Option<PersistedState>>,
+}
+
+impl PresetStateStore {
+    fn new(path: PathBuf, initial: Option<PersistedState>) -> Self {
+        Self {
+            path,
+            cache: Mutex::new(initial),
+        }
+    }
+
+    fn load_from_disk(path: &PathBuf) -> Result<Option<PersistedState>, String> {
+        match fs::read_to_string(path) {
+            Ok(contents) => serde_json::from_str(&contents)
+                .map(Some)
+                .map_err(|err| err.to_string()),
+            Err(error) if error.kind() == ErrorKind::NotFound => Ok(None),
+            Err(error) => Err(error.to_string()),
+        }
+    }
+
+    fn load_state(&self) -> Result<Option<PersistedState>, String> {
+        {
+            let cache = self.cache.lock().map_err(|err| err.to_string())?;
+            if cache.is_some() {
+                return Ok(cache.clone());
+            }
+        }
+
+        let loaded = Self::load_from_disk(&self.path)?;
+        let mut cache = self.cache.lock().map_err(|err| err.to_string())?;
+        *cache = loaded.clone();
+        Ok(loaded)
+    }
+
+    fn save_state(&self, state: PersistedState) -> Result<PersistedState, String> {
+        if let Some(parent) = self.path.parent() {
+            fs::create_dir_all(parent).map_err(|err| err.to_string())?;
+        }
+
+        let serialized = serde_json::to_string_pretty(&state).map_err(|err| err.to_string())?;
+        fs::write(&self.path, serialized).map_err(|err| err.to_string())?;
+
+        let mut cache = self.cache.lock().map_err(|err| err.to_string())?;
+        *cache = Some(state.clone());
+
+        Ok(state)
+    }
 }
 
 fn ensure_overlay_window(app: &AppHandle) {
@@ -70,7 +207,7 @@ fn ensure_floating_window(app: &AppHandle) {
     )
     .title("GoBuddy Quick Panel")
     .inner_size(160.0, 220.0)
-    .resizable(false)
+    .resizable(true)
     .skip_taskbar(true)
     .always_on_top(true)
     .transparent(true)
@@ -95,6 +232,44 @@ fn primary_monitor_dimensions(app: &AppHandle) -> (f64, f64) {
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+#[tauri::command]
+fn load_presets_state(
+    preset_store: State<'_, PresetStateStore>,
+) -> Result<Option<PersistedState>, String> {
+    preset_store.load_state()
+}
+
+#[tauri::command]
+fn save_presets_state(
+    app: AppHandle,
+    preset_store: State<'_, PresetStateStore>,
+    state: PersistedState,
+) -> Result<(), String> {
+    let saved = preset_store.save_state(state)?;
+    app.emit(PRESETS_STATE_EVENT, saved)
+        .map_err(|err| err.to_string())
+}
+
+fn emit_latest_presets_state(app: &AppHandle) {
+    let preset_store = match app.try_state::<PresetStateStore>() {
+        Some(state) => state,
+        None => return,
+    };
+
+    let current_state = match preset_store.load_state() {
+        Ok(Some(state)) => state,
+        Ok(None) => PersistedState::default(),
+        Err(error) => {
+            eprintln!("Failed to load presets state for floating window: {}", error);
+            return;
+        }
+    };
+
+    if let Err(error) = app.emit(PRESETS_STATE_EVENT, current_state) {
+        eprintln!("Failed to emit latest presets state: {}", error);
+    }
 }
 
 async fn hide_overlay_internal(app: &AppHandle, overlay_state: &OverlayState) -> Result<(), String> {
@@ -130,6 +305,35 @@ async fn hide_floating_window(app: AppHandle, overlay_state: State<'_, OverlaySt
     hide_floating_window_internal(&app, &overlay_state).await
 }
 
+#[tauri::command]
+fn resize_floating_window(
+    app: AppHandle,
+    overlay_state: State<'_, OverlayState>,
+    height: f64,
+) -> Result<(), String> {
+    let clamped_height = height.clamp(120.0, 600.0);
+    let stored_bounds = overlay_state
+        .floating_bounds
+        .lock()
+        .ok()
+        .and_then(|bounds| *bounds);
+    let stored_width = stored_bounds
+        .map(|(_, _, width, _)| width.round() as u32)
+        .filter(|w| *w > 0)
+        .unwrap_or(160);
+
+    if let Some(window) = app.get_webview_window("floating_panel") {
+        let _ = window.set_size(PhysicalSize::new(stored_width, clamped_height.round() as u32));
+    }
+
+    if let Ok(mut bounds) = overlay_state.floating_bounds.lock() {
+        if let Some((x, y, width, _)) = *bounds {
+            *bounds = Some((x, y, width, clamped_height));
+        }
+    }
+    Ok(())
+}
+
 fn show_or_focus_floating_window(app: &AppHandle, overlay_state: &OverlayState) -> Result<(), String> {
     ensure_floating_window(app);
     let (overlay_x, overlay_y) = match overlay_state.overlay_position.lock() {
@@ -137,10 +341,20 @@ fn show_or_focus_floating_window(app: &AppHandle, overlay_state: &OverlayState) 
         Err(_) => (200.0, 200.0),
     };
 
+    let stored_bounds = overlay_state
+        .floating_bounds
+        .lock()
+        .ok()
+        .and_then(|bounds| *bounds);
+
     let panel_width = 160;
-    let panel_height = 220;
     let panel_width_f = panel_width as f64;
-    let panel_height_f = panel_height as f64;
+    let stored_height = stored_bounds
+        .map(|(_, _, _, h)| h)
+        .unwrap_or(220.0)
+        .clamp(120.0, 600.0);
+    let panel_height_f = stored_height;
+    let panel_height = panel_height_f.round() as u32;
     let panel_center_x = overlay_x + 16.0;
     let (screen_w, screen_h) = primary_monitor_dimensions(app);
     let max_x = (screen_w - panel_width_f).max(0.0);
@@ -159,6 +373,7 @@ fn show_or_focus_floating_window(app: &AppHandle, overlay_state: &OverlayState) 
         if let Ok(mut visible) = overlay_state.floating_visible.lock() {
             *visible = true;
         }
+        emit_latest_presets_state(app);
         return Ok(());
     }
 
@@ -368,14 +583,28 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             greet,
+            load_presets_state,
+            save_presets_state,
             hide_overlay,
             hide_floating_window,
+            resize_floating_window,
             show_floating_window
         ])
         .setup(|app| {
             let overlay_state = OverlayState::default();
             app.manage(overlay_state.clone());
             let app_handle = app.handle();
+
+            let data_dir = match app_handle.path().app_data_dir() {
+                Ok(dir) => dir,
+                Err(err) => return Err(err.into()),
+            };
+            fs::create_dir_all(&data_dir)?;
+            let store_path = data_dir.join("gobuddy_presets.json");
+            let initial_state = PresetStateStore::load_from_disk(&store_path)
+                .map_err(|err| Error::new(ErrorKind::Other, err))?;
+            app.manage(PresetStateStore::new(store_path, initial_state));
+
             ensure_overlay_window(&app_handle);
             ensure_floating_window(&app_handle);
             // Start the global mouse listener
