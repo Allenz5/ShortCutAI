@@ -42,7 +42,7 @@ struct OverlayState {
 
 const PRESETS_STATE_EVENT: &str = "gobuddy://presets-state";
 const FLOATING_PANEL_WIDTH: f64 = 120.0;
-const FLOATING_PANEL_HEIGHT: f64 = 200.0;
+const FLOATING_PANEL_HEIGHT: f64 = 180.0;
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 struct Preset {

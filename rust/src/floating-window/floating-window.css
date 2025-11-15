@@ -1,0 +1,124 @@
+:root {
+  color-scheme: light;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+}
+
+body {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.floating-panel {
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  position: relative;
+  -webkit-app-region: drag;
+}
+
+.panel-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-app-region: no-drag;
+  padding-right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  scrollbar-width: none;
+}
+
+.panel-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.section {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section + .section {
+  border-top: 1px solid #dfe3ed;
+  padding-top: 4px;
+}
+
+.preset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  -webkit-app-region: no-drag;
+}
+
+.preset-button {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  padding: 2px 4px;
+  border: none;
+  border-radius: 5px;
+  background: #ffffff;
+  font-size: 9px;
+  color: #111322;
+  cursor: pointer;
+  min-height: 20px;
+  -webkit-app-region: no-drag;
+  transition: background 0.15s ease;
+}
+
+.preset-button:hover {
+  background: rgba(17, 19, 34, 0.1);
+}
+
+.preset-button img {
+  width: 12px;
+  height: 12px;
+}
+
+.preset-button span {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.preset-empty-message {
+  width: 100%;
+  font-size: 9px;
+  color: #8f95a9;
+  text-align: center;
+  padding: 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
