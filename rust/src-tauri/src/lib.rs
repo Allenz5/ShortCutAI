@@ -41,6 +41,8 @@ struct OverlayState {
 }
 
 const PRESETS_STATE_EVENT: &str = "gobuddy://presets-state";
+const FLOATING_PANEL_WIDTH: f64 = 120.0;
+const FLOATING_PANEL_HEIGHT: f64 = 200.0;
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 struct Preset {
@@ -206,8 +208,8 @@ fn ensure_floating_window(app: &AppHandle) {
         tauri::WebviewUrl::App("floating-window.html".into()),
     )
     .title("GoBuddy Quick Panel")
-    .inner_size(160.0, 220.0)
-    .resizable(true)
+    .inner_size(FLOATING_PANEL_WIDTH, FLOATING_PANEL_HEIGHT)
+    .resizable(false)
     .skip_taskbar(true)
     .always_on_top(true)
     .transparent(true)
@@ -305,35 +307,6 @@ async fn hide_floating_window(app: AppHandle, overlay_state: State<'_, OverlaySt
     hide_floating_window_internal(&app, &overlay_state).await
 }
 
-#[tauri::command]
-fn resize_floating_window(
-    app: AppHandle,
-    overlay_state: State<'_, OverlayState>,
-    height: f64,
-) -> Result<(), String> {
-    let clamped_height = height.clamp(120.0, 600.0);
-    let stored_bounds = overlay_state
-        .floating_bounds
-        .lock()
-        .ok()
-        .and_then(|bounds| *bounds);
-    let stored_width = stored_bounds
-        .map(|(_, _, width, _)| width.round() as u32)
-        .filter(|w| *w > 0)
-        .unwrap_or(160);
-
-    if let Some(window) = app.get_webview_window("floating_panel") {
-        let _ = window.set_size(PhysicalSize::new(stored_width, clamped_height.round() as u32));
-    }
-
-    if let Ok(mut bounds) = overlay_state.floating_bounds.lock() {
-        if let Some((x, y, width, _)) = *bounds {
-            *bounds = Some((x, y, width, clamped_height));
-        }
-    }
-    Ok(())
-}
-
 fn show_or_focus_floating_window(app: &AppHandle, overlay_state: &OverlayState) -> Result<(), String> {
     ensure_floating_window(app);
     let (overlay_x, overlay_y) = match overlay_state.overlay_position.lock() {
@@ -341,25 +314,15 @@ fn show_or_focus_floating_window(app: &AppHandle, overlay_state: &OverlayState) 
         Err(_) => (200.0, 200.0),
     };
 
-    let stored_bounds = overlay_state
-        .floating_bounds
-        .lock()
-        .ok()
-        .and_then(|bounds| *bounds);
-
-    let panel_width = 160;
-    let panel_width_f = panel_width as f64;
-    let stored_height = stored_bounds
-        .map(|(_, _, _, h)| h)
-        .unwrap_or(220.0)
-        .clamp(120.0, 600.0);
-    let panel_height_f = stored_height;
+    let panel_width_f = FLOATING_PANEL_WIDTH;
+    let panel_height_f = FLOATING_PANEL_HEIGHT;
+    let panel_width = panel_width_f.round() as u32;
     let panel_height = panel_height_f.round() as u32;
     let panel_center_x = overlay_x + 16.0;
     let (screen_w, screen_h) = primary_monitor_dimensions(app);
     let max_x = (screen_w - panel_width_f).max(0.0);
     let max_y = (screen_h - panel_height_f).max(0.0);
-    let panel_x = (panel_center_x - (panel_width as f64) / 2.0).clamp(0.0, max_x);
+    let panel_x = (panel_center_x - panel_width_f / 2.0).clamp(0.0, max_x);
     let panel_y = overlay_y.clamp(0.0, max_y);
 
     if let Some(window) = app.get_webview_window("floating_panel") {
@@ -587,7 +550,6 @@ pub fn run() {
             save_presets_state,
             hide_overlay,
             hide_floating_window,
-            resize_floating_window,
             show_floating_window
         ])
         .setup(|app| {

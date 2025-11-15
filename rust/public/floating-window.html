@@ -14,7 +14,7 @@
       html,
       body {
         width: 100%;
-        min-height: 100%;
+        height: 100%;
         background: transparent;
         font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
       }
@@ -26,33 +26,60 @@
         background: transparent;
         padding: 0;
         margin: 0;
+        overflow: hidden;
       }
 
       .panel {
         width: 100%;
+        height: 100%;
         background: #ffffff;
         border-radius: 12px;
         box-shadow: none;
-        padding: 12px 14px;
+        padding: 4px 5px;
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        gap: 10px;
+        gap: 6px;
         overflow: hidden;
         position: relative;
         -webkit-app-region: drag;
+      }
+
+      .panel-scroll {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        -webkit-app-region: no-drag;
+        padding-right: 1px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(17, 19, 34, 0.45) transparent;
+      }
+
+      .panel-scroll::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .panel-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .panel-scroll::-webkit-scrollbar-thumb {
+        background: rgba(17, 19, 34, 0.45);
+        border-radius: 999px;
       }
 
       .section {
         flex: 0 0 auto;
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 3px;
       }
 
       .section + .section {
-        border-top: 1px solid #e3e6ef;
-        padding-top: 10px;
+        border-top: 1px solid #dfe3ed;
+        padding-top: 6px;
       }
 
       .preset-list {
@@ -65,22 +92,22 @@
       .preset-button {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 3px;
         width: 100%;
-        padding: 4px 6px;
+        padding: 2px 4px;
         border: 1px solid #cfd4e3;
-        border-radius: 8px;
+        border-radius: 6px;
         background: #f8f9fb;
-        font-size: 11px;
+        font-size: 9px;
         color: #111322;
         cursor: pointer;
-        min-height: 26px;
+        min-height: 20px;
         -webkit-app-region: no-drag;
       }
 
       .preset-button img {
-        width: 16px;
-        height: 16px;
+        width: 12px;
+        height: 12px;
       }
 
       .preset-button span {
@@ -91,24 +118,30 @@
         text-align: left;
       }
 
-      .preset-empty-line {
+      .preset-empty-message {
         width: 100%;
-        height: 1px;
-        background: #e3e6ef;
-        margin: 8px 0;
+        font-size: 9px;
+        color: #8f95a9;
+        text-align: center;
+        padding: 2px 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     </style>
   </head>
   <body>
     <div class="panel">
-      <div class="section" data-view="screenshot">
-        <div class="preset-list"></div>
-      </div>
-      <div class="section" data-view="inputField">
-        <div class="preset-list"></div>
-      </div>
-      <div class="section" data-view="selection">
-        <div class="preset-list"></div>
+      <div class="panel-scroll">
+        <div class="section" data-view="screenshot">
+          <div class="preset-list"></div>
+        </div>
+        <div class="section" data-view="inputField">
+          <div class="preset-list"></div>
+        </div>
+        <div class="section" data-view="selection">
+          <div class="preset-list"></div>
+        </div>
       </div>
     </div>
 
@@ -130,6 +163,11 @@
         const list = section.querySelector('.preset-list');
         return { view, list };
       });
+      const SECTION_LABELS = {
+        screenshot: "Screenshot",
+        inputField: "Input Field",
+        selection: "Selection",
+      };
 
       const createEmptyState = () => ({
         presets: {
@@ -169,9 +207,11 @@
           const viewPresets = presets[view] ?? [];
           list.innerHTML = "";
           if (viewPresets.length === 0) {
-            const line = document.createElement('div');
-            line.className = 'preset-empty-line';
-            list.appendChild(line);
+            const emptyState = document.createElement('div');
+            emptyState.className = 'preset-empty-message';
+            const label = SECTION_LABELS[view] ?? view ?? 'this section';
+            emptyState.textContent = `No presets in ${label}`;
+            list.appendChild(emptyState);
             return;
           }
           viewPresets.forEach((preset) => {
@@ -218,13 +258,10 @@
         }
       }
 
-      const panelElement = document.querySelector('.panel');
-
       async function refreshPresets() {
         const latest = await fetchLatestState();
         stateStore.set(latest);
         renderFromState(stateStore.current);
-        queueAdjustWindowHeight();
       }
 
       async function closeWindow() {
@@ -241,24 +278,6 @@
       });
 
       let unsubscribeFromUpdates = null;
-      let adjustHeightRaf = null;
-      function queueAdjustWindowHeight() {
-        if (!panelElement || typeof invoke !== 'function') {
-            return;
-        }
-        if (adjustHeightRaf) {
-          cancelAnimationFrame(adjustHeightRaf);
-        }
-        adjustHeightRaf = requestAnimationFrame(() => {
-          adjustHeightRaf = null;
-          const desiredHeight = panelElement.scrollHeight;
-          if (Number.isFinite(desiredHeight)) {
-            invoke('resize_floating_window', { height: desiredHeight }).catch((error) => {
-              console.warn("Failed to resize floating window", error);
-            });
-          }
-        });
-      }
 
       async function subscribeToUpdates() {
         if (!tauriEvents?.listen || unsubscribeFromUpdates) {
@@ -273,7 +292,6 @@
             }
             stateStore.set(payload);
             renderFromState(stateStore.current);
-            queueAdjustWindowHeight();
           });
 
           unsubscribeFromUpdates = () => {
