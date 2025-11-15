@@ -49,7 +49,7 @@ body {
   width: 24px;
   height: 24px;
   display: block;
-  border-radius: 6px;
+  /* border-radius: 6px; */
   transition: transform 0.1s ease;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
   user-select: none;
