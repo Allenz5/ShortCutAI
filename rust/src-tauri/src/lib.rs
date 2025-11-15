@@ -32,7 +32,52 @@ struct OverlayState {
     overlay_visible: Arc<Mutex<bool>>,
     floating_bounds: Arc<Mutex<Option<(f64, f64, f64, f64)>>>,
     floating_visible: Arc<Mutex<bool>>,
-    main_has_focus: Arc<Mutex<bool>>,
+}
+
+fn ensure_overlay_window(app: &AppHandle) {
+    if app.get_webview_window("overlay").is_some() {
+        return;
+    }
+
+    let _ = tauri::WebviewWindowBuilder::new(
+        app,
+        "overlay",
+        tauri::WebviewUrl::App("overlay.html".into()),
+    )
+    .title("Overlay")
+    .inner_size(32.0, 32.0)
+    .min_inner_size(32.0, 32.0)
+    .max_inner_size(32.0, 32.0)
+    .position(0.0, 0.0)
+    .decorations(false)
+    .transparent(true)
+    .always_on_top(true)
+    .resizable(false)
+    .skip_taskbar(true)
+    .visible(false)
+    .build();
+}
+
+fn ensure_floating_window(app: &AppHandle) {
+    if app.get_webview_window("floating_panel").is_some() {
+        return;
+    }
+
+    let _ = tauri::WebviewWindowBuilder::new(
+        app,
+        "floating_panel",
+        tauri::WebviewUrl::App("floating-window.html".into()),
+    )
+    .title("GoBuddy Quick Panel")
+    .inner_size(160.0, 220.0)
+    .resizable(false)
+    .skip_taskbar(true)
+    .always_on_top(true)
+    .transparent(true)
+    .decorations(false)
+    .position(0.0, 0.0)
+    .visible(false)
+    .build();
 }
 
 fn primary_monitor_dimensions(app: &AppHandle) -> (f64, f64) {
@@ -85,15 +130,8 @@ async fn hide_floating_window(app: AppHandle, overlay_state: State<'_, OverlaySt
     hide_floating_window_internal(&app, &overlay_state).await
 }
 
-#[tauri::command]
-async fn set_main_focus_state(overlay_state: State<'_, OverlayState>, focused: bool) -> Result<(), String> {
-    if let Ok(mut flag) = overlay_state.main_has_focus.lock() {
-        *flag = focused;
-    }
-    Ok(())
-}
-
 fn show_or_focus_floating_window(app: &AppHandle, overlay_state: &OverlayState) -> Result<(), String> {
+    ensure_floating_window(app);
     let (overlay_x, overlay_y) = match overlay_state.overlay_position.lock() {
         Ok(stored) => stored.clone().unwrap_or((200.0, 200.0)),
         Err(_) => (200.0, 200.0),
@@ -115,7 +153,6 @@ fn show_or_focus_floating_window(app: &AppHandle, overlay_state: &OverlayState) 
         let _ = window.set_size(PhysicalSize::new(panel_width, panel_height));
         let _ = window.set_always_on_top(true);
         window.show().map_err(|e| e.to_string())?;
-        window.set_focus().map_err(|e| e.to_string())?;
         if let Ok(mut bounds) = overlay_state.floating_bounds.lock() {
             *bounds = Some((panel_x, panel_y, panel_width_f, panel_height_f));
         }
@@ -123,30 +160,6 @@ fn show_or_focus_floating_window(app: &AppHandle, overlay_state: &OverlayState) 
             *visible = true;
         }
         return Ok(());
-    }
-
-    tauri::WebviewWindowBuilder::new(
-        app,
-        "floating_panel",
-        tauri::WebviewUrl::App("floating-window.html".into()),
-    )
-    .title("GoBuddy Quick Panel")
-    .inner_size(panel_width as f64, panel_height as f64)
-    .resizable(false)
-    .skip_taskbar(true)
-    .always_on_top(true)
-    .transparent(true)
-    .decorations(false)
-    .position(panel_x, panel_y)
-    .visible(true)
-    .build()
-    .map_err(|e| e.to_string())?;
-
-    if let Ok(mut bounds) = overlay_state.floating_bounds.lock() {
-        *bounds = Some((panel_x, panel_y, panel_width_f, panel_height_f));
-    }
-    if let Ok(mut visible) = overlay_state.floating_visible.lock() {
-        *visible = true;
     }
 
     Ok(())
@@ -160,13 +173,9 @@ async fn show_floating_window(app: AppHandle, overlay_state: State<'_, OverlaySt
 fn show_overlay_at_position(app: &AppHandle, overlay_state: &OverlayState, x: f64, y: f64, start_x: f64) {
     let app_handle = app.clone();
     let overlay_state = overlay_state.clone();
-    let should_refocus_main = overlay_state
-        .main_has_focus
-        .lock()
-        .map(|v| *v)
-        .unwrap_or(false);
 
     tauri::async_runtime::spawn(async move {
+        ensure_overlay_window(&app_handle);
         // Determine offset direction based on drag direction
         // If dragged to the left (end_x < start_x), show button to the left
         let x_offset = if x < start_x { -50.0 } else { 10.0 };
@@ -186,32 +195,7 @@ fn show_overlay_at_position(app: &AppHandle, overlay_state: &OverlayState, x: f6
                 let _ = window.set_position(PhysicalPosition::new(overlay_x.round() as i32, overlay_y.round() as i32));
                 let _ = window.show();
             }
-            None => {
-                // Create the overlay window if it doesn't exist
-                let window = tauri::WebviewWindowBuilder::new(
-                    &app_handle,
-                    "overlay",
-                    tauri::WebviewUrl::App("overlay.html".into()),
-                )
-                .title("Overlay")
-                .inner_size(32.0, 32.0)
-                .min_inner_size(32.0, 32.0)
-                .max_inner_size(32.0, 32.0)
-                .position(overlay_x, overlay_y)
-                .decorations(false)
-                .transparent(true)
-                .always_on_top(true)
-                .resizable(false)
-                .skip_taskbar(true)
-                .visible(false)
-                .build();
-
-                if let Ok(win) = window {
-                    // Set size explicitly before showing
-                    let _ = win.set_size(PhysicalSize::new(32, 32));
-                    let _ = win.show();
-                }
-            }
+            None => {}
         }
 
         if let Ok(mut stored) = overlay_state.overlay_position.lock() {
@@ -219,11 +203,6 @@ fn show_overlay_at_position(app: &AppHandle, overlay_state: &OverlayState, x: f6
         }
         if let Ok(mut visible) = overlay_state.overlay_visible.lock() {
             *visible = true;
-        }
-        if should_refocus_main {
-            if let Some(main_window) = app_handle.get_webview_window("main") {
-                let _ = main_window.set_focus();
-            }
         }
     });
 }
@@ -386,18 +365,21 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_store::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             greet,
             hide_overlay,
             hide_floating_window,
-            show_floating_window,
-            set_main_focus_state
+            show_floating_window
         ])
         .setup(|app| {
             let overlay_state = OverlayState::default();
             app.manage(overlay_state.clone());
+            let app_handle = app.handle();
+            ensure_overlay_window(&app_handle);
+            ensure_floating_window(&app_handle);
             // Start the global mouse listener
-            start_mouse_listener(app.handle().clone(), overlay_state);
+            start_mouse_listener(app_handle.clone(), overlay_state);
             Ok(())
         })
         .run(tauri::generate_context!())

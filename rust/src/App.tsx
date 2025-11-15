@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { Store } from "@tauri-apps/plugin-store";
 import {
   register as registerGlobalShortcut,
   unregister as unregisterGlobalShortcut,
@@ -12,6 +13,8 @@ const cursorIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
 const plusIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='5' x2='12' y2='19'/%3E%3Cline x1='5' y1='12' x2='19' y2='12'/%3E%3C/svg%3E";
 
 const STORAGE_KEY = "gobuddy_presets_v1";
+const STORE_FILE = "gobuddy.store.json";
+const STORE_STATE_KEY = "gobuddy_state_v1";
 
 type View = "screenshot" | "inputField" | "selection";
 const allViews: View[] = ["screenshot", "inputField", "selection"];
@@ -187,6 +190,66 @@ const isTauriEnvironment = (): boolean =>
   typeof window !== "undefined" &&
   Boolean((window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__);
 
+let persistentStore: Store | null = null;
+
+const getPersistentStore = async (): Promise<Store | null> => {
+  if (!isTauriEnvironment()) {
+    return null;
+  }
+  if (!persistentStore) {
+    persistentStore = await Store.load(STORE_FILE);
+  }
+  return persistentStore;
+};
+
+const readPersistedState = async (): Promise<PersistedState | null> => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const store = await getPersistentStore();
+    if (store) {
+      const stored = (await store.get(STORE_STATE_KEY)) as PersistedState | null;
+      if (stored) {
+        return stored;
+      }
+    }
+  } catch (error) {
+    console.warn("Failed to read persistent store", error);
+  }
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as PersistedState) : null;
+  } catch (error) {
+    console.warn("Failed to parse local storage state", error);
+    return null;
+  }
+};
+
+const writePersistedState = async (state: PersistedState): Promise<void> => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const store = await getPersistentStore();
+    if (store) {
+      await store.set(STORE_STATE_KEY, state);
+      await store.save();
+    }
+  } catch (error) {
+    console.warn("Failed to write persistent store", error);
+  }
+
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Ignore local storage errors (e.g., quota)
+  }
+};
+
 function App() {
   const [activeView, setActiveView] = useState<View>("screenshot");
   const [activePanel, setActivePanel] = useState<Panel>({ type: "section-config", view: "screenshot" });
@@ -217,25 +280,10 @@ function App() {
       hideFloatingUi();
     };
 
-    const handleFocus = () => {
-      invoke("set_main_focus_state", { focused: true }).catch(() => {});
-    };
-
-    const handleBlur = () => {
-      invoke("set_main_focus_state", { focused: false }).catch(() => {});
-    };
-
     window.addEventListener("keydown", handleKeyDown, true);
-    window.addEventListener("focus", handleFocus);
-    window.addEventListener("blur", handleBlur);
-
-    handleFocus();
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown, true);
-      window.removeEventListener("focus", handleFocus);
-      window.removeEventListener("blur", handleBlur);
-      handleBlur();
     };
   }, []);
 
@@ -244,42 +292,59 @@ function App() {
       return;
     }
 
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Partial<PersistedState>;
-        const normalizedPresets = normalizePresets(parsed.presets);
-        setPresets(normalizedPresets);
+    let cancelled = false;
 
-        const storedNextPresetId = parsed.nextPresetId;
-        if (typeof storedNextPresetId === "number" && storedNextPresetId > 0) {
-          setNextPresetId(storedNextPresetId);
-        } else {
-          setNextPresetId(deriveNextPresetId(normalizedPresets));
+    const hydrate = async () => {
+      try {
+        const stored = await readPersistedState();
+        if (cancelled) {
+          return;
         }
 
-        const normalizedActiveIds = normalizeActivePresetIds(parsed.activePresetIds);
-        setActivePresetIds(normalizedActiveIds);
+        if (stored) {
+          const normalizedPresets = normalizePresets(stored.presets);
+          setPresets(normalizedPresets);
 
-        setSettings(normalizeSettings(parsed.settings));
-        setHotkeys(normalizeHotkeys(parsed.hotkeys));
-      } else {
-        setPresets(createEmptyPresets());
-        setNextPresetId(1);
-        setActivePresetIds(createEmptyActivePresets());
-        setSettings(defaultSettings);
-        setHotkeys(defaultHotkeys);
+          const storedNextPresetId = stored.nextPresetId;
+          if (typeof storedNextPresetId === "number" && storedNextPresetId > 0) {
+            setNextPresetId(storedNextPresetId);
+          } else {
+            setNextPresetId(deriveNextPresetId(normalizedPresets));
+          }
+
+          const normalizedActiveIds = normalizeActivePresetIds(stored.activePresetIds);
+          setActivePresetIds(normalizedActiveIds);
+
+          setSettings(normalizeSettings(stored.settings));
+          setHotkeys(normalizeHotkeys(stored.hotkeys));
+        } else {
+          setPresets(createEmptyPresets());
+          setNextPresetId(1);
+          setActivePresetIds(createEmptyActivePresets());
+          setSettings(defaultSettings);
+          setHotkeys(defaultHotkeys);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.warn("Failed to load presets from storage", error);
+          setPresets(createEmptyPresets());
+          setNextPresetId(1);
+          setActivePresetIds(createEmptyActivePresets());
+          setSettings(defaultSettings);
+          setHotkeys(defaultHotkeys);
+        }
+      } finally {
+        if (!cancelled) {
+          hasHydratedRef.current = true;
+        }
       }
-    } catch (error) {
-      console.warn("Failed to load presets from storage", error);
-      setPresets(createEmptyPresets());
-      setNextPresetId(1);
-      setActivePresetIds(createEmptyActivePresets());
-      setSettings(defaultSettings);
-      setHotkeys(defaultHotkeys);
-    } finally {
-      hasHydratedRef.current = true;
-    }
+    };
+
+    void hydrate();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -295,11 +360,7 @@ function App() {
       hotkeys,
     };
 
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    } catch (error) {
-      console.warn("Failed to persist presets", error);
-    }
+    void writePersistedState(payload);
   }, [presets, nextPresetId, activePresetIds, settings, hotkeys]);
 
   useEffect(() => {
